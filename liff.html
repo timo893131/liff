@@ -2,74 +2,299 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIFF 測試</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>小組點名管理</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 20px; }
-        .status { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
-        .status.success { background-color: #e0f8e0; color: #006400; }
-        .status.error { background-color: #f8e0e0; color: #a00000; }
-        .profile { border: 1px solid #ccc; padding: 15px; border-radius: 8px; word-wrap: break-word; }
-        .profile img { max-width: 100px; border-radius: 50%; display: block; margin-bottom: 10px; }
-        .profile p { margin: 5px 0; }
-        .profile code { background-color: #eee; padding: 2px 5px; border-radius: 4px; }
+        :root {
+            --primary-color: #00B900;
+            --light-gray: #f4f4f4;
+            --gray: #ccc;
+            --dark-gray: #555;
+            --white: #fff;
+            --red: #d9534f;
+            --orange: #f0ad4e;
+            --blue: #337ab7;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        #status-bar {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        #status-bar.loading { background-color: #eef; color: var(--blue); }
+        #status-bar.success { background-color: #e0f8e0; color: #006400; }
+        #status-bar.error { background-color: #f8e0e0; color: #a00000; }
+
+        .member-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .member-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .member-item:last-child {
+            border-bottom: none;
+        }
+        .member-item.selected {
+            background-color: #f0fff0;
+        }
+        .member-name {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .status-buttons button {
+            border: 1px solid var(--gray);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            padding: 8px 12px;
+            margin-left: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .status-buttons button.active {
+            color: var(--white);
+            border-color: transparent;
+        }
+        .status-buttons button[data-status="出席"].active { background-color: var(--primary-color); }
+        .status-buttons button[data-status="請假"].active { background-color: var(--orange); }
+        .status-buttons button[data-status="未到"].active { background-color: var(--red); }
+
+        #submit-btn {
+            display: none; /* Initially hidden */
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.2s;
+        }
+        #submit-btn:hover {
+            background-color: #00a000;
+        }
+        #submit-btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
-    <h1>LIFF 基礎功能測試頁面</h1>
-    <div id="status">正在載入...</div>
-    <div id="profile" style="display:none;">
-        <h2>您的 LINE 個人資料：</h2>
-        <img id="pictureUrl" alt="Profile Picture">
-        <p><strong>使用者 ID (userId):</strong> <code id="userId"></code></p>
-        <p><strong>暱稱 (displayName):</strong> <code id="displayName"></code></p>
-        <p><strong>狀態消息 (statusMessage):</strong> <code id="statusMessage"></code></p>
+    <div class="container">
+        <h1>小組點名系統</h1>
+        <div id="status-bar" class="loading">正在初始化...</div>
+
+        <ul id="member-list" class="member-list">
+            </ul>
+        
+        <button id="submit-btn">送出點名紀錄</button>
     </div>
 
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://static-line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         // ===============================================================
-        // 【使用者設定區】請填入您的 LIFF ID
+        // 【使用者設定區】請填入您的金鑰與網址
         // ===============================================================
-        const LIFF_ID = '2008077252-KZWrNxZp';
+        const LIFF_ID = '2008077252-KZWrNxZp'; // 您的 LIFF ID
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycby5tY1hOQ1jGg8V2f3k9lX7n0C6J9p8A7b6T5E4D3C2B1A0/exec'; // 您的 GAS API 網址
         // ===============================================================
 
+        // DOM Elements
+        const statusBar = document.getElementById('status-bar');
+        const memberList = document.getElementById('member-list');
+        const submitBtn = document.getElementById('submit-btn');
+
+        let currentUserId = null;
+
+        // Main function runs on page load
         async function main() {
-            const statusDiv = document.getElementById('status');
-            
             try {
-                statusDiv.textContent = "正在初始化 LIFF...";
+                updateStatus('正在初始化 LIFF...', 'loading');
                 await liff.init({ liffId: LIFF_ID });
                 
-                statusDiv.textContent = "正在確認登入狀態...";
                 if (!liff.isLoggedIn()) {
-                    statusDiv.textContent = "您尚未登入，將為您導向登入頁面...";
+                    updateStatus('將為您導向登入頁面...', 'loading');
                     liff.login();
                     return;
                 }
 
-                statusDiv.textContent = "正在取得使用者個人資料...";
                 const profile = await liff.getProfile();
-
-                // 如果成功，顯示個人資料
-                document.getElementById('userId').textContent = profile.userId;
-                document.getElementById('displayName').textContent = profile.displayName;
-                document.getElementById('statusMessage').textContent = profile.statusMessage || '(無)';
-                document.getElementById('pictureUrl').src = profile.pictureUrl;
-                document.getElementById('profile').style.display = 'block';
-
-                // 更新最終狀態
-                statusDiv.textContent = "測試成功！✅ LIFF 基礎功能運作正常。";
-                statusDiv.className = 'status success';
+                currentUserId = profile.userId;
+                
+                updateStatus('權限驗證中...', 'loading');
+                fetchAndRenderMembers();
 
             } catch (err) {
-                // 如果失敗，顯示錯誤訊息
                 console.error(err);
-                statusDiv.innerHTML = `測試失敗 ❌<br><small>${err}</small>`;
-                statusDiv.className = 'status error';
+                updateStatus(`初始化失敗: ${err.message}`, 'error');
             }
         }
 
+        // Fetch member list from GAS API and render it
+        async function fetchAndRenderMembers() {
+            const url = new URL(GAS_API_URL);
+            url.searchParams.append('action', 'getMembers');
+            url.searchParams.append('userId', currentUserId);
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    updateStatus('請開始點名', 'success');
+                    renderMemberList(result.data);
+                    submitBtn.style.display = 'block'; // Show the submit button
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                updateStatus(`讀取成員失敗: ${err.message}`, 'error');
+            }
+        }
+
+        // Render the list of members on the page
+        function renderMemberList(members) {
+            if (!members || members.length === 0) {
+                updateStatus('沒有需要點名的成員。', 'loading');
+                return;
+            }
+            
+            memberList.innerHTML = ''; // Clear existing list
+            
+            members.forEach(member => {
+                const li = document.createElement('li');
+                li.className = 'member-item';
+                // Store member data on the element itself
+                li.dataset.userId = member.userId;
+                li.dataset.displayName = member.displayName;
+                li.dataset.status = '未點'; // Default status
+
+                li.innerHTML = `
+                    <span class="member-name">${member.displayName}</span>
+                    <div class="status-buttons">
+                        <button data-status="出席">出席</button>
+                        <button data-status="請假">請假</button>
+                        <button data-status="未到">未到</button>
+                    </div>
+                `;
+                memberList.appendChild(li);
+            });
+        }
+
+        // Event handler for status button clicks (using event delegation)
+        memberList.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                const button = e.target;
+                const parentItem = button.closest('.member-item');
+                const newStatus = button.dataset.status;
+
+                // Update data attribute
+                parentItem.dataset.status = newStatus;
+                parentItem.classList.add('selected');
+
+                // Update button styles
+                const allButtons = parentItem.querySelectorAll('.status-buttons button');
+                allButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            }
+        });
+
+        // Event handler for the submit button
+        submitBtn.addEventListener('click', async function() {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
+
+            const attendanceData = [];
+            const allItems = memberList.querySelectorAll('.member-item');
+
+            allItems.forEach(item => {
+                // Only include members who have a LINE userId and have been marked
+                if (item.dataset.userId && item.dataset.userId !== 'null' && item.dataset.status !== '未點') {
+                    attendanceData.push({
+                        userId: item.dataset.userId,
+                        status: item.dataset.status
+                    });
+                }
+            });
+
+            if (attendanceData.length === 0) {
+                updateStatus('您尚未點名任何成員', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出點名紀錄';
+                return;
+            }
+
+            const payload = {
+                recorderId: currentUserId,
+                attendance: attendanceData
+            };
+            
+            const url = new URL(GAS_API_URL);
+            url.searchParams.append('action', 'batchUpdateAttendance');
+            url.searchParams.append('data', JSON.stringify(payload));
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    updateStatus(`成功記錄 ${result.data.count} 筆資料！`, 'success');
+                    // Optionally close the LIFF window
+                    // liff.closeWindow();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (err) {
+                 console.error(err);
+                 updateStatus(`提交失敗: ${err.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出點名紀錄';
+            }
+        });
+
+        // Helper function to update the status bar
+        function updateStatus(message, type) {
+            statusBar.textContent = message;
+            statusBar.className = type; // 'loading', 'success', 'error'
+        }
+
+        // Run the main function when the script loads
         main();
     </script>
 </body>
