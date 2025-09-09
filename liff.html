@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF 測試</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 20px; }
+        .status { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .status.success { background-color: #e0f8e0; color: #006400; }
+        .status.error { background-color: #f8e0e0; color: #a00000; }
+        .profile { border: 1px solid #ccc; padding: 15px; border-radius: 8px; word-wrap: break-word; }
+        .profile img { max-width: 100px; border-radius: 50%; display: block; margin-bottom: 10px; }
+        .profile p { margin: 5px 0; }
+        .profile code { background-color: #eee; padding: 2px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>LIFF 基礎功能測試頁面</h1>
+    <div id="status">正在載入...</div>
+    <div id="profile" style="display:none;">
+        <h2>您的 LINE 個人資料：</h2>
+        <img id="pictureUrl" alt="Profile Picture">
+        <p><strong>使用者 ID (userId):</strong> <code id="userId"></code></p>
+        <p><strong>暱稱 (displayName):</strong> <code id="displayName"></code></p>
+        <p><strong>狀態消息 (statusMessage):</strong> <code id="statusMessage"></code></p>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // ===============================================================
+        // 【使用者設定區】請填入您的 LIFF ID
+        // ===============================================================
+        const LIFF_ID = '2008077252-KZWrNxZp';
+        // ===============================================================
+
+        async function main() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                statusDiv.textContent = "正在初始化 LIFF...";
+                await liff.init({ liffId: LIFF_ID });
+                
+                statusDiv.textContent = "正在確認登入狀態...";
+                if (!liff.isLoggedIn()) {
+                    statusDiv.textContent = "您尚未登入，將為您導向登入頁面...";
+                    liff.login();
+                    return;
+                }
+
+                statusDiv.textContent = "正在取得使用者個人資料...";
+                const profile = await liff.getProfile();
+
+                // 如果成功，顯示個人資料
+                document.getElementById('userId').textContent = profile.userId;
+                document.getElementById('displayName').textContent = profile.displayName;
+                document.getElementById('statusMessage').textContent = profile.statusMessage || '(無)';
+                document.getElementById('pictureUrl').src = profile.pictureUrl;
+                document.getElementById('profile').style.display = 'block';
+
+                // 更新最終狀態
+                statusDiv.textContent = "測試成功！✅ LIFF 基礎功能運作正常。";
+                statusDiv.className = 'status success';
+
+            } catch (err) {
+                // 如果失敗，顯示錯誤訊息
+                console.error(err);
+                statusDiv.innerHTML = `測試失敗 ❌<br><small>${err}</small>`;
+                statusDiv.className = 'status error';
+            }
+        }
+
+        main();
+    </script>
+</body>
+</html>
