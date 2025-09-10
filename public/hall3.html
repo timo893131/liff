@@ -7,8 +7,10 @@
   <link rel="stylesheet" href="css/styles.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body>
+ <body>
   <!-- 導航欄容器 -->
   <div id="navbar-container"></div>
 
@@ -105,6 +107,23 @@
   <!-- 腳本 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // LIFF 初始化
+    async function initializeLiff() {
+      try {
+        await liff.init({ liffId: "2008077252-KZWrNxZp" }); // 請替換成您的 LIFF ID
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          const profile = await liff.getProfile();
+          console.log(profile); // 您可以在這裡看到使用者的名稱、頭像等資訊
+          // 接下來可以根據 profile.userId 來客製化頁面內容
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    initializeLiff();
+
     let formData = {};
     let nameToRowIndexMap = {};
     let lastFormData = null;

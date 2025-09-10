@@ -1,0 +1,68 @@
+{"level":"info","message":"Server is running at http://localhost:3000","timestamp":"2025-03-11T05:50:46.956Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T05:50:51.373Z"}
+{"level":"info","message":"Cache miss for key: getData_hall3_J, data fetched and cached","timestamp":"2025-03-11T05:50:55.386Z"}
+{"level":"info","message":"Cache hit for key: getData_hall3_J","timestamp":"2025-03-11T05:50:56.891Z"}
+{"level":"info","message":"Cache miss for key: prayerStats_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T05:50:58.559Z"}
+{"level":"info","message":"Cache miss for key: prayerData_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T05:50:58.683Z"}
+{"level":"info","message":"Cache miss for key: getData_hall62_J, data fetched and cached","timestamp":"2025-03-11T05:50:59.479Z"}
+{"level":"info","message":"Cache miss for key: getData_hall62_H, data fetched and cached","timestamp":"2025-03-11T05:51:02.079Z"}
+{"level":"info","message":"Cache hit for key: prayerData_hall-h3-new","timestamp":"2025-03-11T05:51:04.386Z"}
+{"level":"info","message":"Cache hit for key: prayerStats_hall-h3-new","timestamp":"2025-03-11T05:51:04.439Z"}
+{"level":"info","message":"Cache hit for key: getData_hall3_J","timestamp":"2025-03-11T05:51:05.302Z"}
+{"level":"info","message":"Cache miss for key: getData_hall3_H, data fetched and cached","timestamp":"2025-03-11T05:51:07.842Z"}
+{"level":"info","message":"Cache miss for key: getData_hall71_J, data fetched and cached","timestamp":"2025-03-11T05:51:11.647Z"}
+{"level":"info","message":"Cache miss for key: getData_hall71_H, data fetched and cached","timestamp":"2025-03-11T05:51:13.495Z"}
+{"level":"info","message":"Cache hit for key: prayerStats_hall-h3-new","timestamp":"2025-03-11T05:51:17.432Z"}
+{"level":"info","message":"Cache hit for key: prayerData_hall-h3-new","timestamp":"2025-03-11T05:51:17.461Z"}
+{"level":"info","message":"Cache miss for key: prayerStats_hall-h71, data fetched and cached","timestamp":"2025-03-11T05:51:20.831Z"}
+{"level":"info","message":"Cache miss for key: prayerData_hall-h71, data fetched and cached","timestamp":"2025-03-11T05:51:20.874Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T05:51:32.791Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T05:52:33.748Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T05:53:11.567Z"}
+{"level":"info","message":"Cache hit for key: prayerStats_hall-h3-new","timestamp":"2025-03-11T05:53:31.633Z"}
+{"level":"info","message":"Cache hit for key: prayerData_hall-h3-new","timestamp":"2025-03-11T05:53:31.656Z"}
+{"level":"info","message":"Cache hit for key: prayerData_hall-h3-new","timestamp":"2025-03-11T05:54:20.194Z"}
+{"level":"info","message":"Cache hit for key: prayerStats_hall-h3-new","timestamp":"2025-03-11T05:54:20.210Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T05:54:29.311Z"}
+{"level":"info","message":"Cache miss for key: prayerData_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T05:56:38.419Z"}
+{"level":"info","message":"Cache miss for key: prayerStats_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T05:56:38.424Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T05:59:49.270Z"}
+{"level":"info","message":"Cache miss for key: signupList, data fetched and cached","timestamp":"2025-03-11T05:59:53.321Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T06:05:22.296Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T06:15:22.248Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T06:21:49.231Z"}
+{"level":"info","message":"Cache miss for key: targetCount, data fetched and cached","timestamp":"2025-03-11T06:31:49.300Z"}
+{"level":"info","message":"Server is running at http://localhost:3000","timestamp":"2025-03-11T06:41:10.394Z"}
+{"endpoint":"/getTargetCount","error":{},"ip":"::1","level":"error","message":"Error fetching target count:","timestamp":"2025-03-11T06:41:13.038Z"}
+{"endpoint":"/getPrayerStats","error":{},"ip":"::1","level":"error","message":"Error retrieving prayer stats:","timestamp":"2025-03-11T06:41:37.432Z"}
+{"endpoint":"/getPrayerData","error":{},"ip":"::1","level":"error","message":"Error retrieving prayer data:","timestamp":"2025-03-11T06:41:37.439Z"}
+{"level":"info","message":"Cache hit for key: prayerData_hall-h3-new","timestamp":"2025-03-11T06:41:41.818Z"}
+{"level":"info","message":"Cache hit for key: prayerStats_hall-h3-new","timestamp":"2025-03-11T06:41:41.915Z"}
+{"endpoint":"/getSignupList","error":{},"ip":"::1","level":"error","message":"Error fetching signup list:","timestamp":"2025-03-11T06:41:46.715Z"}
+{"level":"info","message":"Server is running at http://localhost:3000","timestamp":"2025-03-11T06:42:25.722Z"}
+{"level":"info","message":"Cache miss for key: getData_hall62_J, data fetched and cached","timestamp":"2025-03-11T06:42:45.915Z"}
+{"level":"info","message":"Cache miss for key: signupList, data fetched and cached","timestamp":"2025-03-11T06:42:58.283Z"}
+{"level":"info","message":"Cache miss for key: prayerData_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T06:43:10.141Z"}
+{"level":"info","message":"Cache miss for key: prayerStats_hall-h3-new, data fetched and cached","timestamp":"2025-03-11T06:43:10.144Z"}
+{"level":"info","message":"Cache miss for key: prayerStats_hall-h71, data fetched and cached","timestamp":"2025-03-11T06:43:12.723Z"}
+{"level":"info","message":"Cache miss for key: prayerData_hall-h71, data fetched and cached","timestamp":"2025-03-11T06:43:12.767Z"}
+{"level":"info","message":"Server is running at http://localhost:3000","timestamp":"2025-03-11T07:46:22.754Z"}
+{"endpoint":"/getTargetCount","error":{},"ip":"::1","level":"error","message":"Error fetching target count:","timestamp":"2025-03-11T07:46:26.813Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:46:55.703Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:47:18.753Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:47:26.715Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:48:18.752Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:48:18.756Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:48:18.758Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:48:26.701Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:49:18.751Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:49:18.758Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:49:26.704Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:50:18.709Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:50:18.712Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:50:26.702Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:51:18.720Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:51:18.724Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:53:20.688Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:53:20.690Z"}
+{"level":"info","message":"Cache hit for key: targetCount","timestamp":"2025-03-11T07:53:20.692Z"}

@@ -1,17 +1,17 @@
 module.exports = {
   // Google 表格 ID
-  SPREADSHEET_ID: '1cFwGGUTBy4Sta0lvRi9_mRG6axGOyzmVdXKsyBKyXkY',
+  SPREADSHEET_ID: '1O0AZJX7h0n2wQROOCDW1SfbOMvnXPeDxUl0TGyWY0ik',
   
   // 有效的日期列范围
   VALID_COLUMNS: ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'],
   
   // Hall 的名称映射
   HALLS: {
-    hall3: '3會所',
-    hall62: '62會所',
-    hall71: '71會所',
-    hall82: '82會所',
-    hall103: '103會所',
+    hall3: '3',
+    hall62: '62',
+    hall71: '71',
+    hall82: '82',
+    hall103: '103',
   },HALLS: {
     'hall-h3-new': 'H3（新生）',
     'hall-h3-peace': 'H3（和平）',
