@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 LINE UserID</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #userId {
+            font-size: 14px;
+            background-color: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            word-wrap: break-word; /* 確保文字會換行 */
+            user-select: all; /* 讓使用者可以輕易選取全部文字 */
+            -webkit-user-select: all; /* 兼容 Safari */
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>您的 LINE User ID</h1>
+    <p>請長按並複製以下完整的 ID：</p>
+    <div id="userId">正在載入...</div>
+    <p id="status"></p>
+
+    <script src="https://static-line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // 【重要】請將 'YOUR_LIFF_ID' 換成您自己的 LIFF ID
+        const LIFF_ID = '2008077252-KZWrNxZp';
+
+        async function main() {
+            const userIdDiv = document.getElementById('userId');
+            const statusP = document.getElementById('status');
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                const profile = await liff.getProfile();
+                userIdDiv.textContent = profile.userId;
+                statusP.textContent = '讀取成功！';
+                statusP.className = 'success';
+            } catch (err) {
+                userIdDiv.textContent = '讀取失敗';
+                statusP.textContent = err.toString();
+                statusP.className = 'error';
+            }
+        }
+        main();
+    </script>
+</body>
+</html>

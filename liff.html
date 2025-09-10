@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>小組點名管理</title>
+    <title>小組點名管理 (開發版)</title>
     <style>
         :root {
             --primary-color: #00B900;
@@ -117,20 +117,27 @@
     <div class="container">
         <h1>小組點名系統</h1>
         <div id="status-bar" class="loading">正在初始化...</div>
-
-        <ul id="member-list" class="member-list">
-            </ul>
-        
+        <ul id="member-list" class="member-list"></ul>
         <button id="submit-btn">送出點名紀錄</button>
     </div>
 
     <script src="https://static-line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         // ===============================================================
-        // 【使用者設定區】請填入您的金鑰與網址
+        // 【使用者設定區】
         // ===============================================================
         const LIFF_ID = '2008077252-KZWrNxZp'; // 您的 LIFF ID
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw5EHZZGEhGIX4p2cZtPDRKcxxq0JcZJdlfpDKq4gjAW13FKlQnwZ35pFr7M3D7PPy0/exec'; // 您的 GAS API 網址
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyEoO5uLTmd2xQlay7w3hGhrGGrTXGA1GVwio5cqBeVg8H5YOhRn_RC10xzBPDSU1Nw/exec'; // 您的 GAS API 網址
+
+        // ===============================================================
+        // ✨【電腦開發模式設定】✨
+        // ===============================================================
+        const IS_DEV_MODE = true; // 在電腦上開發時，請設為 true
+        const MOCK_PROFILE = {
+            userId: "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // ❗ 請務必填入您自己的 LINE User ID 來測試
+            displayName: "電腦測試員",
+            pictureUrl: "https://via.placeholder.com/150"
+        };
         // ===============================================================
 
         // DOM Elements
@@ -145,22 +152,39 @@
             try {
                 updateStatus('正在初始化 LIFF...', 'loading');
                 await liff.init({ liffId: LIFF_ID });
-                
-                if (!liff.isLoggedIn()) {
-                    updateStatus('將為您導向登入頁面...', 'loading');
-                    liff.login();
-                    return;
+
+                let profile;
+                if (liff.isInClient() || !IS_DEV_MODE) {
+                    if (!liff.isLoggedIn()) {
+                        updateStatus('將為您導向登入頁面...', 'loading');
+                        liff.login();
+                        return;
+                    }
+                    profile = await liff.getProfile();
+                } else {
+                    updateStatus('電腦開發模式已啟用', 'success');
+                    profile = MOCK_PROFILE;
                 }
 
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
+                if (!profile.userId) {
+                    throw new Error("無法取得使用者 ID，請檢查 MOCK_PROFILE 設定。");
+                }
                 
-                updateStatus('權限驗證中...', 'loading');
+                currentUserId = profile.userId;
+                console.log("Current User ID:", currentUserId);
+                
+                updateStatus('正在讀取成員列表...', 'loading');
                 fetchAndRenderMembers();
 
             } catch (err) {
-                console.error(err);
-                updateStatus(`初始化失敗: ${err.message}`, 'error');
+                console.error("初始化或取得 Profile 失敗:", err);
+                if (!liff.isInClient() && IS_DEV_MODE) {
+                    updateStatus('電腦開發模式 (LIFF 初始化失敗，使用模擬資料)', 'success');
+                    currentUserId = MOCK_PROFILE.userId;
+                    fetchAndRenderMembers();
+                } else {
+                    updateStatus(`初始化失敗: ${err.message}`, 'error');
+                }
             }
         }
 
@@ -177,7 +201,7 @@
                 if (result.status === 'success') {
                     updateStatus('請開始點名', 'success');
                     renderMemberList(result.data);
-                    submitBtn.style.display = 'block'; // Show the submit button
+                    submitBtn.style.display = 'block';
                 } else {
                     throw new Error(result.message);
                 }
@@ -194,15 +218,14 @@
                 return;
             }
             
-            memberList.innerHTML = ''; // Clear existing list
+            memberList.innerHTML = '';
             
             members.forEach(member => {
                 const li = document.createElement('li');
                 li.className = 'member-item';
-                // Store member data on the element itself
                 li.dataset.userId = member.userId;
                 li.dataset.displayName = member.displayName;
-                li.dataset.status = '未點'; // Default status
+                li.dataset.status = '未點';
 
                 li.innerHTML = `
                     <span class="member-name">${member.displayName}</span>
@@ -223,11 +246,9 @@
                 const parentItem = button.closest('.member-item');
                 const newStatus = button.dataset.status;
 
-                // Update data attribute
                 parentItem.dataset.status = newStatus;
                 parentItem.classList.add('selected');
 
-                // Update button styles
                 const allButtons = parentItem.querySelectorAll('.status-buttons button');
                 allButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
@@ -243,7 +264,6 @@
             const allItems = memberList.querySelectorAll('.member-item');
 
             allItems.forEach(item => {
-                // Only include members who have a LINE userId and have been marked
                 if (item.dataset.userId && item.dataset.userId !== 'null' && item.dataset.status !== '未點') {
                     attendanceData.push({
                         userId: item.dataset.userId,
@@ -274,8 +294,6 @@
 
                 if (result.status === 'success') {
                     updateStatus(`成功記錄 ${result.data.count} 筆資料！`, 'success');
-                    // Optionally close the LIFF window
-                    // liff.closeWindow();
                 } else {
                     throw new Error(result.message);
                 }
@@ -291,10 +309,9 @@
         // Helper function to update the status bar
         function updateStatus(message, type) {
             statusBar.textContent = message;
-            statusBar.className = type; // 'loading', 'success', 'error'
+            statusBar.className = `status-${type}`;
         }
-
-        // Run the main function when the script loads
+        
         main();
     </script>
 </body>
