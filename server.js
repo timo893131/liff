@@ -87,74 +87,46 @@ async function getLastRow(sheetName, nameCol) {
 // --- API 路由 ---
 // (保留您所有的 API 路由，此處僅為範例，請確認您所有的路由都在)
 
-// 獲取點名資料
+// 路由：獲取 Google Sheets 數據
 app.get('/getData', async (req, res) => {
+  // **除錯日誌**：在伺服器端印出收到的請求參數
+  console.log(`[後端除錯] 收到 /getData 請求，參數為:`, req.query);
+
   const { selectedDate, hall } = req.query;
+
   try {
     const validColumns = config.VALID_COLUMNS;
     if (!validColumns.includes(selectedDate)) {
-      return res.status(400).json({ message: '無效的日期' });
+      // 如果日期無效，也印出日誌
+      console.error(`[後端除錯] 無效的 selectedDate: '${selectedDate}'`);
+      return res.status(400).json({ message: 'Invalid date selected' });
     }
-    const sheetName = config.HALLS[hall];
-    if (!sheetName) {
-      return res.status(400).json({ message: '無效的會所名稱' });
+
+    const sheetName = config.HALLS[hall] || '3'; // 已更新
+    const RANGE = `${sheetName}!A12:X`;
+    const sheetData = await getSheetData(RANGE);
+
+    if (!sheetData || sheetData.length === 0) {
+      return res.json({ groupedData: {}, nameToRowIndexMap: {} });
     }
-    
-    const range = `${sheetName}!A12:X`; // 從 A12 開始讀取
-    const sheetData = await getSheetData(range);
-    
+
     const groupedData = {};
     const nameToRowIndexMap = {};
 
-    if (sheetData && sheetData.length > 0) {
-        sheetData.forEach((row, rowIndex) => {
-            const name = row[1] ? row[1].trim() : '';
-            const caregiver = row[5] ? row[5].trim() : '';
-            if (name && caregiver && name !== '序') {
-                const colIndex = validColumns.indexOf(selectedDate);
-                const attendance = row[colIndex + 6] || ''; // G欄是第7欄，索引為6
-                
-                if (!groupedData[caregiver]) {
-                    groupedData[caregiver] = [];
-                }
-                groupedData[caregiver].push({ name, attendance: attendance.split(',').map(s => s.trim()).filter(Boolean) });
-                nameToRowIndexMap[name] = rowIndex + 12; // 實際行號
-            }
-        });
-    }
-    res.json({ groupedData, nameToRowIndexMap });
-  } catch (err) {
-    console.error('[/getData] 錯誤:', err);
-    res.status(500).json({ message: '伺服器錯誤', error: err.message });
-  }
-});
-
-
-// 新增資料
-app.post('/addNewData', async (req, res) => {
-  const { hall, name, identity, region, caregiver } = req.body;
-  
-  try {
-    if (!hall || !name || !identity || !region || !caregiver) {
-      return res.status(400).json({ message: 'Missing required body parameters' });
-    }
-
-    const sheetName = config.HALLS[hall] || '3';
-    const lastRow = await getLastRow(sheetName, 1); // 檢查 B 列 (姓名)
-    const newRow = [['', name, identity, '', region, caregiver]]; // 保持欄位對應
-    const range = `${sheetName}!A${lastRow}`;
-
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: config.SPREADSHEET_ID,
-        range: range,
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: newRow }
+    sheetData.forEach((row, rowIndex) => {
+      const formattedData = formatRowData(row, validColumns, selectedDate);
+      if (formattedData) {
+        const { name, caregiver, selectedAttendance } = formattedData;
+        if (!groupedData[caregiver]) groupedData[caregiver] = [];
+        groupedData[caregiver].push({ name, attendance: selectedAttendance ? selectedAttendance.split(',').map(s => s.trim()) : [] });
+        nameToRowIndexMap[name] = rowIndex + 12;
+      }
     });
 
-    res.status(200).json({ message: 'Data added successfully' });
-  } catch (error) {
-    console.error('Error adding data:', error);
-    res.status(500).json({ message: 'Error adding data', error: error.message });
+    res.json({ groupedData, nameToRowIndexMap });
+  } catch (err) {
+    console.error('Error retrieving data:', err);
+    res.status(500).json({ message: 'Error retrieving data', error: err.message });
   }
 });
 
