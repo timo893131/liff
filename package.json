@@ -1,5 +1,5 @@
 {
-    "name": "google-sheets-app",
+    "name": "shepherd-system",
     "version": "1.0.0",
     "description": "A backend application for handling Google Sheets data with Express.js",
     "main": "server.js",
