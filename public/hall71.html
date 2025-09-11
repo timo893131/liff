@@ -252,7 +252,7 @@
 
     function getCurrentDateRange() {
       const currentDate = new Date();
-      const startDate = new Date(currentDate.getFullYear(), 1, 17); // 每年 2 月 17 日開始
+      const startDate = new Date(currentDate.getFullYear(), 8, 1); // 每年 2 月 17 日開始
       const oneDay = 24 * 60 * 60 * 1000;
       const diffDays = Math.floor((currentDate - startDate) / oneDay);
       if (diffDays < 0) return 'G';
@@ -261,7 +261,7 @@
     }
 
     function formatDateRange(dateCode) {
-      const startDate = new Date(new Date().getFullYear(), 1, 17);
+      const startDate = new Date(new Date().getFullYear(), 8, 1);
       const oneDay = 24 * 60 * 60 * 1000;
       const weekIndex = dateCode.charCodeAt(0) - 'G'.charCodeAt(0);
       const weekStart = new Date(startDate.getTime() + weekIndex * 7 * oneDay);
@@ -273,7 +273,7 @@
       const defaultDate = getCurrentDateRange();
       const dateRangeSelect = document.getElementById('date-range');
       if (dateRangeSelect) {
-        const dateRanges = generateDateRanges(new Date(new Date().getFullYear(), 1, 17), 20); // 20 週
+        const dateRanges = generateDateRanges(new Date(new Date().getFullYear(), 8, 1), 16); // 20 週
         dateRangeSelect.innerHTML = '';
         for (let code in dateRanges) {
           const option = document.createElement('option');

@@ -689,8 +689,31 @@ button:active, .btn:active {
     padding: 8px 16px;
     font-size: 12px;
   }
+  .index-container p {
+    font-size: 18px;
+  }
+  .content-container {
+    min-height: calc(100vh - 100px);
+  }
 }
-
+/* 響應式設計：在手機等小螢幕上調整樣式 */
+@media (max-width: 600px) {
+  .index-container p {
+    font-size: 18px;
+  }
+  .content-container {
+    min-height: calc(100vh - 100px);
+  }
+  .index-container {
+    margin-top: 80px; /* 與上方標題的間距 */
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    max-width: 100%; /* 避免在寬螢幕上過寬 */
+  }
+}
 @media (min-width: 601px) and (max-width: 1024px) {
   h1 { font-size: 22px; }
   button, .btn { padding: 10px 22px; font-size: 14px; }
@@ -761,4 +784,32 @@ button:active, .btn:active {
     font-size: 14px;
     border-radius: 40px;
   }
+  .content-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直置中 */
+    align-items: center;    /* 水平置中 */
+    text-align: center;       /* 確保內部文字也置中 */
+    min-height: calc(100vh - 150px); /* 計算最小高度以實現垂直置中 */
+  }
+  
+  /* 經文容器樣式 */
+  .index-container {
+    margin-top: 40px; /* 與上方標題的間距 */
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    max-width: 80%; /* 避免在寬螢幕上過寬 */
+  }
+  
+  .index-container p {
+    font-size: 22px; /* 調整字體大小 */
+    color: #34495e;  /* 使用較柔和的深藍灰色 */
+    margin: 0;
+    line-height: 1.8; /* 增加行高，提升可讀性 */
+  }
+  
+
 }

@@ -150,7 +150,7 @@
 
     // 獲取並顯示所有會所的統計數據
     async function fetchTotalStats(selectedDate) {
-      const halls = ['hall3', 'hall62', 'hall71', 'hall82', 'hall103'];
+      const halls = ['hall3', 'hall3E', 'hall62', 'hall71', 'hall82', 'hall103'];
       const statsData = {};
       const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
 
@@ -184,7 +184,7 @@
     function renderTotalStats(statsData, selectedDate) {
       const statsBody = document.getElementById('total-stats-body');
       statsBody.innerHTML = '';
-      const halls = ['hall3', 'hall62', 'hall71', 'hall82', 'hall103'];
+      const halls = ['hall3', 'hall3E', 'hall62', 'hall71', 'hall82', 'hall103'];
       const options = ['有主日', '答應主日', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
 
       // 計算所有會所的總和
