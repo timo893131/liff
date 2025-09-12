@@ -1,6 +1,6 @@
-/* index.css: 通用樣式表 */
+/* public/css/index.css (最終優化版 - 修正手機導覽列) */
 
-/* 全局樣式 */
+/* --- 全局樣式 --- */
 body {
   font-family: 'Noto Sans TC', Arial, sans-serif;
   background: linear-gradient(135deg, #f4faff 0%, #e6f0fa 100%);
@@ -13,31 +13,29 @@ body {
   align-items: center;
 }
 
-/* 導航欄樣式 */
+/* --- 導航欄樣式 (覆蓋) --- */
+/* 為了讓 index.html 和 0329.html 有獨特的導覽列外觀 */
 .navbar {
   background: #3498db;
   padding: 15px 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   width: 100%;
 }
-
 .navbar a {
   color: white;
   font-size: 18px;
   padding: 10px 15px;
   transition: all 0.3s ease;
 }
-
 .navbar-nav .nav-link:hover {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
 }
-
 .navbar-toggler {
   border-color: white;
 }
 
-/* 主容器樣式 */
+/* --- 主容器樣式 --- */
 .content-container {
   background: #ffffff;
   padding: 40px;
@@ -47,18 +45,16 @@ body {
   max-width: 1000px;
   margin: 30px auto;
   transition: transform 0.3s ease;
-  padding-top: 40px;
+  text-align: center;
 }
-
 .content-container:hover {
   transform: translateY(-5px);
 }
 
-/* 標題樣式 */
+/* --- 標題樣式 --- */
 .main-title {
   color: #2c3e50;
   font-size: 36px;
-  text-align: center;
   margin-top: 30px;
   margin-bottom: 30px;
   font-weight: 700;
@@ -68,9 +64,8 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* 倒數計時樣式 */
+/* --- 倒數計時樣式 --- */
 .countdown-container {
-  text-align: center;
   margin: 0 0 30px;
   padding: 25px;
   background: #fff;
@@ -78,79 +73,65 @@ body {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
-
 .countdown-container.urgent {
   background: #ffe6e6;
   box-shadow: 0 6px 20px rgba(214, 48, 49, 0.2);
   animation: pulse-bg 1.5s infinite;
 }
-
 .countdown-container h2 {
   font-size: 28px;
   color: #e67e22;
   margin-bottom: 20px;
   font-weight: 600;
 }
-
 .countdown-container.urgent h2 {
   color: #d63031;
 }
-
 .wave-text {
   display: inline-flex;
   justify-content: center;
   width: 100%;
 }
-
 .wave-char {
   display: inline-block;
   animation: wave 1.5s infinite;
   animation-delay: calc(0.1s * var(--char-index));
 }
-
 .countdown {
   display: flex;
   justify-content: center;
   gap: 25px;
   flex-wrap: wrap;
 }
-
 .countdown-item {
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   padding: 20px;
   border-radius: 12px;
   min-width: 90px;
-  text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
-
 .countdown-container.urgent .countdown-item {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
 }
-
 .countdown-item:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
-
 .countdown-item span {
   display: block;
   font-size: 36px;
   font-weight: 700;
   transition: transform 0.2s ease;
 }
-
 .countdown-item.active span {
   animation: tick 0.2s ease-in-out;
 }
-
 .countdown-item label {
   font-size: 16px;
   opacity: 0.9;
 }
-
 .urgent-text {
   display: none;
   color: #d63031;
@@ -159,68 +140,44 @@ body {
   font-weight: 500;
 }
 
-/* 目標人數樣式 */
+/* --- 目標人數 & 報名按鈕 --- */
 .target-container {
-  text-align: center;
   margin: 0 0 30px;
   padding: 20px;
   background: #fff;
   border-radius: 15px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
 }
-
-.target-container p {
-  font-size: 20px;
-  color: #2c3e50;
-  margin: 0;
-}
-
-.target-container strong {
-  color: #28a745;
-  font-weight: 700;
-}
-
-.target-container .highlight {
-  font-weight: 700;
-  color: #e67e22;
-  font-size: 24px;
-}
-
-/* 報名按鈕樣式 */
-.signup-container {
-  text-align: center;
-  margin: 0 0 30px;
-}
-
+.target-container p { font-size: 20px; color: #2c3e50; margin: 0; }
+.target-container strong { color: #28a745; font-weight: 700; }
+.target-container .highlight { font-weight: 700; color: #e67e22; font-size: 24px; }
+.signup-container { margin: 0 0 30px; }
 .btn-signup {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   color: white;
   padding: 15px 40px;
-  border: none;
   border-radius: 50px;
   font-size: 18px;
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
 }
-
-.btn-signup:hover {
-  background: linear-gradient(135deg, #27ae60, #219653);
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+.btn-signup:hover { transform: scale(1.05); }
+.btn-view-list {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  margin-left: 15px;
 }
+.btn-view-list:hover { transform: scale(1.05); }
 
-.btn-signup:active {
-  transform: scale(0.98);
-}
-
-/* 圖片樣式 */
-.image-container {
-  margin: 0 auto;
-  max-width: 800px;
-}
-
+/* --- 圖片 --- */
+.image-container { margin: 0 auto; max-width: 800px; }
 .img-fluid {
   border-radius: 15px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
@@ -228,53 +185,26 @@ body {
   object-fit: cover;
   transition: transform 0.3s ease;
 }
+.img-fluid:hover { transform: scale(1.02); }
 
-.img-fluid:hover {
-  transform: scale(1.02);
-}
-/* 在既有樣式後新增 */
-.btn-view-list {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  padding: 15px 40px;
-  border: none;
-  border-radius: 50px;
-  font-size: 18px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-  margin-left: 15px; /* 與「立即報名」按鈕保持間距 */
-}
+/* --- 動畫 --- */
+@keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes pulse-bg { 0% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(214, 48, 49, 0); } 100% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0); } }
+@keyframes tick { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-.btn-view-list:hover {
-  background: linear-gradient(135deg, #2980b9, #2471a3);
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+
+/* --- ★★★ 響應式設計 (包含導覽列修正) ★★★ --- */
+@media (max-width: 991px) {
+  /* 強制導覽列頂部元素不換行，確保標題和漢堡按鈕在同一行 */
+  .navbar > .container-fluid {
+    flex-wrap: nowrap;
+  }
+  /* 讓漢堡選單的內容（包括日期/搜尋框）正常顯示 */
+  #navbarNav {
+      width: 100%;
+  }
 }
 
-.btn-view-list:active {
-  transform: scale(0.98);
-}
-
-/* 動畫 */
-@keyframes wave {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes pulse-bg {
-  0% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.7); }
-  70% { box-shadow: 0 0 0 12px rgba(214, 48, 49, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0); }
-}
-
-@keyframes tick {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-/* 響應式設計 */
 @media (max-width: 650px) {
   .main-title { font-size: 28px; }
   .content-container { padding: 20px; }
@@ -284,7 +214,7 @@ body {
   .countdown-item label { font-size: 14px; }
   .target-container p { font-size: 16px; }
   .target-container .highlight { font-size: 20px; }
-  .btn-signup { padding: 12px 30px; font-size: 16px; }
+  .btn-signup, .btn-view-list { padding: 12px 30px; font-size: 16px; }
   .signup-container {
     display: flex;
     flex-direction: column;
@@ -292,98 +222,7 @@ body {
     gap: 15px;
   }
   .btn-view-list {
-    padding: 12px 30px;
-    font-size: 16px;
     margin-left: 0;
-  }
-  h1 { font-size: 20px; }
-  .container { padding: 15px; width: 95%; }
-  button, .btn { padding: 8px 18px; font-size: 12px; }
-  .caregiver-group { padding: 15px; padding-left: 30px; }
-  #main-floating-button { 
-    width: 40px; 
-    height: 40px; 
-    bottom: 15px; 
-    right: 15px;
-  }
-  #main-floating-button span { font-size: 20px; }
-  .btn.submit-group-btn { 
-    width: 100px; 
-    padding: 6px 12px; 
-    font-size: 10px; 
-    border-radius: 16px; 
-  }
-  .navbar { padding: 5px 0; }
-  .navbar .container-fluid { 
-    display: flex; 
-    flex-wrap: nowrap; 
-    align-items: center; 
-    justify-content: flex-end; 
-  }
-  .navbar-brand { 
-    order: 1; 
-    margin-right: auto; 
-  }
-  #date-range-container { 
-    order: 2; 
-    flex-grow: 0; 
-    display: flex; 
-    align-items: center; 
-    gap: 5px; 
-  }
-  .navbar-toggler { order: 3; margin-left: 5px; }
-  #search-input { 
-    flex-grow: 0; 
-    width: 70px; 
-    padding: 4px; 
-    font-size: 12px; 
-    border-radius: 4px; 
-  }
-  #date-range { 
-    flex-grow: 0; 
-    width: 115px; 
-    padding: 4px; 
-    font-size: 12px; 
-    border-radius: 4px; 
-  }
-  .navbar-collapse { order: 4; width: 100%; }
-  .checkbox-wrapper { gap: 8px; padding: 12px; }
-  .checkbox-item { gap: 6px; }
-  .delete-area { display: none; }
-  .prayer-item { padding: 12px; }
-  .prayer-item .status-select { max-width: 80px; font-size: 12px; }
-  .prayer-item .delete-prayer { padding: 4px 10px; font-size: 10px; }
-  .hint-icon { font-size: 18px; }
-  .hint-content { 
-    width: 200px; 
-    padding: 10px; 
-  }
-  .hint-content p { font-size: 12px; }
-  /* 優化會所按鈕在手機畫面的布局 */
-  .mb-3 {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-  }
-  .mb-3 button {
-    flex: 1 1 auto;
-    min-width: 100px;
-    margin: 0;
-    padding: 8px 16px;
-    font-size: 12px;
-    border-radius: 40px;
-  }
-  #sub-buttons button {
-    width: 100px;
-    padding: 8px 16px;
-    font-size: 12px;
-  }
-  .index-container p {
-    font-size: 18px;
-  }
-  .content-container {
-    min-height: calc(100vh - 100px);
   }
 }
 

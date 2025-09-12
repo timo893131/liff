@@ -132,7 +132,7 @@ const validatePrayerHall = (req, res, next) => {
     next();
 };
 
-f// ★★★ 核心修正：更新 isAuthenticated 函式 ★★★
+// ★★★ 核心修正：更新 isAuthenticated 函式 ★★★
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated() && req.user && req.user.role) {
       // 明確地允許 admin 或 editor 角色通過
