@@ -132,18 +132,21 @@ const validatePrayerHall = (req, res, next) => {
     next();
 };
 
+f// ★★★ 核心修正：更新 isAuthenticated 函式 ★★★
 function isAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        if (req.user && req.user.role && req.user.role !== 'guest') {
-            return next();
-        }
-    }
-    // 根據請求類型決定回應方式
-    if (req.path.startsWith('/api/') || req.path.startsWith('/get')) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    res.redirect('/login.html');
+  if (req.isAuthenticated() && req.user && req.user.role) {
+      // 明確地允許 admin 或 editor 角色通過
+      if (req.user.role === 'admin' || req.user.role === 'editor') {
+          return next();
+      }
+  }
+  // 對於所有其他情況 (未登入、guest、或其他無效角色)，則拒絕存取
+  if (req.path.startsWith('/api/') || req.path.startsWith('/get')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.redirect('/login.html');
 }
+
 // ★★★ 新增：管理員權限檢查中介軟體 ★★★
 function isAdmin(req, res, next) {
   if (req.user && req.user.role === 'admin') {
