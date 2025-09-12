@@ -1,4 +1,4 @@
-/* styles.css: 通用樣式表 */
+/* index.css: 通用樣式表 */
 
 /* 全局樣式 */
 body {
@@ -275,7 +275,7 @@ body {
 }
 
 /* 響應式設計 */
-@media (max-width: 600px) {
+@media (max-width: 650px) {
   .main-title { font-size: 28px; }
   .content-container { padding: 20px; }
   .countdown-container h2 { font-size: 22px; }
