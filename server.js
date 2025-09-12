@@ -3,47 +3,115 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
+const LineStrategy = require('passport-line').Strategy;
 const rateLimit = require('express-rate-limit');
-const winston = require('winston'); // ★ UPDATE ★
+const winston = require('winston');
+const { google } = require('googleapis'); // 確保 googleapis 已被引用
 const config = require('./public/config');
 const sheetUtils = require('./utils/sheet');
 
-// --- Winston Logger 設定 --- ★ UPDATE ★
+// --- Winston Logger 設定 ---
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
   transports: [
-    // - 在控制台（Console）顯示日誌
     new winston.transports.Console({ format: winston.format.simple() }),
-    // - 可以取消註解來將日誌寫入檔案
-    // new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    // new winston.transports.File({ filename: 'combined.log' }),
   ],
 });
+
 const app = express();
 const port = process.env.PORT || 3000;
-
-// 中介軟體設定
+// --- 中介軟體設定 ---
+app.set('trust proxy', 1); // ★ 新增 ★: 信任 Render 的反向代理
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors());
+app.use(cors({
+    origin: process.env.BASE_URL || 'http://localhost:3000', // 線上環境的網址
+    credentials: true
+}));
 app.use(bodyParser.json());
+app.use(rateLimit({ windowMs: 10 * 60 * 1000, max: 1000 }));
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    // ★ 更新 ★: 在生產環境中啟用安全的 cookie
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'lax'
+    } 
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// 速率限制
-app.use(rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 1000,
-    message: 'Too many requests, please try again later.'
+// --- Google Sheets API 設定 ---
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+const credentials = process.env.GOOGLE_CREDENTIALS 
+    ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
+    : require('./credentials.json');
+const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+const sheets = google.sheets({ version: 'v4', auth });
+
+
+// --- Passport 與 LINE Login 設定 ---
+passport.use(new LineStrategy({
+    channelID: process.env.LINE_CHANNEL_ID,
+    channelSecret: process.env.LINE_CHANNEL_SECRET,
+    callbackURL: process.env.CALLBACK_URL || "http://localhost:3000/auth/line/callback"
+}, async (accessToken, refreshToken, profile, done) => {
+    const { id: lineUserId, displayName } = profile;
+    logger.info(`User attempting login: ${displayName} (ID: ${lineUserId})`);
+    
+    // ★ 新增日誌 ★: 檢查 SPREADSHEET_ID 是否正確載入
+    logger.info(`Authenticating against SPREADSHEET_ID: ${SPREADSHEET_ID}`);
+
+    try {
+        const usersRange = "'Users'!A2:C";
+        const users = await sheetUtils.getSheetData(usersRange);
+        let user = users.find(u => u && u[0] === lineUserId);
+
+        if (user) {
+            logger.info(`Existing user found: ${displayName}`);
+            if (user[2] !== displayName) {
+                const userRowIndex = users.findIndex(u => u && u[0] === lineUserId) + 2;
+                await sheetUtils.updateSheetData(`'Users'!C${userRowIndex}`, [[displayName]]);
+                logger.info(`Updated user name for ${displayName}`);
+            }
+        } else {
+            logger.info(`New user detected: ${displayName}. Adding to Users sheet.`);
+            const newRowValues = [[lineUserId, 'guest', displayName]];
+            const newRow = users.length + 2;
+            await sheetUtils.updateSheetData(`'Users'!A${newRow}`, newRowValues);
+            user = newRowValues[0];
+        }
+        return done(null, { id: user[0], role: user[1], name: user[2] });
+    } catch (err) {
+        // ★ 新增日誌 ★: 提供更詳細的錯誤情境
+        logger.error(`Authentication process failed for user ${displayName}. Please check if the 'Users' sheet exists and the service account has permissions.`, err);
+        return done(err);
+    }
 }));
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || config.SPREADSHEET_ID;
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
 
-// --- 輔助函式 ---
+
+// --- 輔助函式 & 中介軟體 ---
 function handleError(res, error, message, statusCode = 500) {
-    console.error(message, error.response ? error.response.data.error : error);
+    logger.error(message, { 
+        error: error.message, 
+        stack: error.stack,
+        response: error.response ? error.response.data : undefined
+    });
     res.status(statusCode).json({ message, error: error.message });
 }
 
-// --- 中介軟體 ---
+// 補上遺漏的 validateHall 函式定義
 const validateHall = (req, res, next) => {
     const hall = req.query.hall || req.body.hall;
     if (!hall) return res.status(400).json({ message: 'Missing hall parameter' });
@@ -53,10 +121,107 @@ const validateHall = (req, res, next) => {
     next();
 };
 
-// --- API 路由 ---
+// 補上遺漏的 validatePrayerHall 函式定義
+const validatePrayerHall = (req, res, next) => {
+    const hall = req.query.hall || req.body.hall;
+    if (!hall) return res.status(400).json({ message: 'Missing hall parameter' });
+    const hallColumns = config.PRAYER_HALL_COLUMNS[hall];
+    if (!hallColumns) return res.status(400).json({ message: `Invalid prayer hall: ${hall}` });
+    req.hall = hall;
+    req.hallColumns = hallColumns;
+    next();
+};
 
-// 點名系統相關 API
-app.get('/getDateRanges', async (req, res) => {
+function isAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        if (req.user && req.user.role && req.user.role !== 'guest') {
+            return next();
+        }
+    }
+    // 根據請求類型決定回應方式
+    if (req.path.startsWith('/api/') || req.path.startsWith('/get')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    res.redirect('/login.html');
+}
+// ★★★ 新增：管理員權限檢查中介軟體 ★★★
+function isAdmin(req, res, next) {
+  if (req.user && req.user.role === 'admin') {
+      return next();
+  }
+  return res.status(403).json({ error: 'Forbidden: Admins only' });
+}
+
+// --- 認證路由 ---
+app.get('/auth/line', passport.authenticate('line'));
+app.get('/auth/line/callback', passport.authenticate('line', {
+    successRedirect: '/',
+    failureRedirect: '/login.html'
+}));
+app.get('/auth/logout', (req, res, next) => {
+    req.logout(err => {
+        if (err) return next(err);
+        req.session.destroy(() => {
+            res.redirect('/login.html');
+        });
+    });
+});
+app.get('/api/user', (req, res) => {
+    if (req.isAuthenticated()) {
+        res.json({ loggedIn: true, user: req.user });
+    } else {
+        res.json({ loggedIn: false });
+    }
+});
+// --- ★★★ 新增：使用者管理 API ★★★ ---
+// 獲取所有使用者列表
+app.get('/api/users', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+      const range = "'Users'!A2:C";
+      const sheetData = await sheetUtils.getSheetData(range);
+      const users = (sheetData || []).map(row => ({
+          lineUserId: row[0],
+          role: row[1],
+          name: row[2]
+      })).filter(user => user.lineUserId); // 過濾掉空行
+      res.json(users);
+  } catch (error) {
+      handleError(res, error, 'Error fetching user list');
+  }
+});
+
+// 更新使用者權限
+app.post('/api/users/update-role', isAuthenticated, isAdmin, async (req, res) => {
+  const { lineUserId, newRole } = req.body;
+  if (!lineUserId || !newRole) {
+      return res.status(400).json({ message: 'Missing lineUserId or newRole' });
+  }
+  if (!['admin', 'editor', 'guest'].includes(newRole)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+  }
+
+  try {
+      const idColumnRange = "'Users'!A2:A";
+      const idColumnData = await sheetUtils.getSheetData(idColumnRange);
+      const userRowIndex = idColumnData.findIndex(row => row[0] === lineUserId);
+
+      if (userRowIndex === -1) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const targetRow = userRowIndex + 2; // +2 因為資料從 A2 開始且 findIndex 是 0-based
+      const targetCell = `'Users'!B${targetRow}`;
+      await sheetUtils.updateSheetData(targetCell, [[newRole]]);
+      
+      res.json({ message: 'User role updated successfully' });
+  } catch (error) {
+      handleError(res, error, 'Error updating user role');
+  }
+});
+
+
+// --- API 路由 (確保所有需要保護的路由都加上 isAuthenticated) ---
+app.get('/getDateRanges', isAuthenticated, async (req, res) => {
     try {
         const range = "'設定'!A2:A";
         const sheetData = await sheetUtils.getSheetData(range);
@@ -70,7 +235,8 @@ app.get('/getDateRanges', async (req, res) => {
     }
 });
 
-app.get('/getData', validateHall, async (req, res) => {
+
+app.get('/getData',  isAuthenticated, validateHall, async (req, res) => {
     // ... 此路由邏輯不變，只是呼叫的函式改變
     const { selectedDate } = req.query;
     try {
@@ -98,7 +264,7 @@ app.get('/getData', validateHall, async (req, res) => {
     }
 });
 
-app.post('/addNewData', validateHall, async (req, res) => {
+app.post('/addNewData', isAuthenticated, validateHall, async (req, res) => {
     const { name, identity, region, caregiver, department } = req.body;
     try {
         if (!name || !identity || !region || !caregiver) {
@@ -116,7 +282,7 @@ app.post('/addNewData', validateHall, async (req, res) => {
     }
 });
 
-app.post('/deleteData', validateHall, async (req, res) => {
+app.post('/deleteData', isAuthenticated, validateHall, async (req, res) => {
     // ... 此路由邏輯不變
     const { caregiver, name } = req.body;
     try {
@@ -137,7 +303,7 @@ app.post('/deleteData', validateHall, async (req, res) => {
     }
 });
 
-app.post('/updateData', validateHall, async (req, res) => {
+app.post('/updateData', isAuthenticated, validateHall, async (req, res) => {
     // ... 此路由邏輯不變
     const { updatedData, nameToRowIndexMap, selectedDate } = req.body;
     try {
@@ -165,7 +331,7 @@ app.post('/updateData', validateHall, async (req, res) => {
 });
 
 // 其他相關 API
-app.get('/getRegions', validateHall, async (req, res) => {
+app.get('/getRegions', isAuthenticated, validateHall, async (req, res) => {
     // ... 此路由邏輯不變
     const { hall } = req.query;
     try {
@@ -180,7 +346,7 @@ app.get('/getRegions', validateHall, async (req, res) => {
     }
 });
 
-app.get('/getStats', validateHall, async (req, res) => {
+app.get('/getStats', isAuthenticated, validateHall, async (req, res) => {
     // ... 此路由邏輯不變
     const { selectedDate } = req.query;
     try {
@@ -233,7 +399,7 @@ app.get('/getSignupList', async (req, res) => {
 // --- 代禱牆 API (已重構) ---
 const PRAYER_SHEET_NAME = config.PRAYER_SHEET || '代禱牆';
 
-app.get('/getPrayerData', validateHall, async (req, res) => {
+app.get('/getPrayerData', isAuthenticated, validateHall, async (req, res) => {
     const hallColumns = config.PRAYER_HALL_COLUMNS[req.body.hall || req.query.hall];
     if (!hallColumns) return res.status(400).json({ message: "Invalid prayer hall" });
     
@@ -256,7 +422,7 @@ app.get('/getPrayerData', validateHall, async (req, res) => {
     }
 });
 
-app.post('/addPrayer', validateHall, async (req, res) => {
+app.post('/addPrayer', isAuthenticated, validateHall, async (req, res) => {
     const { content, status } = req.body;
     const hallColumns = config.PRAYER_HALL_COLUMNS[req.body.hall];
     if (!hallColumns) return res.status(400).json({ message: "Invalid prayer hall" });
@@ -274,7 +440,7 @@ app.post('/addPrayer', validateHall, async (req, res) => {
     }
 });
 
-app.post('/deletePrayer', validateHall, async (req, res) => {
+app.post('/deletePrayer', isAuthenticated, validateHall, async (req, res) => {
     const { id } = req.body;
     const hallColumns = config.PRAYER_HALL_COLUMNS[req.body.hall];
     if (!hallColumns) return res.status(400).json({ message: "Invalid prayer hall" });
@@ -292,7 +458,7 @@ app.post('/deletePrayer', validateHall, async (req, res) => {
     }
 });
 
-app.post('/updatePrayerStatus', validateHall, async (req, res) => {
+app.post('/updatePrayerStatus', isAuthenticated, validateHall, async (req, res) => {
     const { id, status } = req.body;
     const hallColumns = config.PRAYER_HALL_COLUMNS[req.body.hall];
     if (!hallColumns) return res.status(400).json({ message: "Invalid prayer hall" });
@@ -310,7 +476,7 @@ app.post('/updatePrayerStatus', validateHall, async (req, res) => {
     }
 });
 
-app.get('/getPrayerStats', validateHall, async (req, res) => {
+app.get('/getPrayerStats', isAuthenticated, validateHall, async (req, res) => {
     const hallColumns = config.PRAYER_HALL_COLUMNS[req.query.hall];
     if (!hallColumns) return res.status(400).json({ message: "Invalid prayer hall" });
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>師大好牧人</title>
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/index.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -23,6 +23,33 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // ★★★ 在檔案最頂端的 script 中加入這個檢查 ★★★
+    fetch('/api/user')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.loggedIn) {
+                window.location.href = '/login.html';
+            } else {
+                // 如果已登入，可以選擇在這裡顯示使用者名稱等
+                console.log('使用者已登入:', data.user.name);
+            }
+        });
+
+     // 檢查管理員權限並顯示對應連結的函式
+     function checkAdmin() {
+        fetch('/api/user', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.loggedIn && data.user.role === 'admin') {
+                    const adminLink = document.getElementById('admin-link');
+                    if (adminLink) {
+                        adminLink.style.display = 'block'; // 如果是 admin，就顯示連結
+                    }
+                }
+            })
+            .catch(error => console.error('無法獲取使用者資訊:', error));
+    }
+
     // 載入 navbar.html 並隱藏不需要的元素
     function loadNavbar() {
         fetch('navbar.html')
@@ -33,9 +60,12 @@
                 if (dateRangeContainer) {
                     dateRangeContainer.style.display = 'none';
                 }
+                // 載入導航欄後，立即檢查管理員身份
+                checkAdmin();
             })
             .catch(error => console.error('Error loading navbar:', error));
     }
+
     // 頁面載入時執行
     document.addEventListener('DOMContentLoaded', loadNavbar);
   </script>

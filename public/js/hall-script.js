@@ -19,8 +19,8 @@ let dateRanges = [];
 // Fetch and set date ranges from the backend
 async function fetchAndSetDateRanges() {
     try {
-        const response = await fetch('/getDateRanges');
-        if (!response.ok) throw new Error('Cannot fetch date ranges');
+        const response = await fetch('/getDateRanges', { credentials: 'include' }); // <-- 加上 credentials
+        if (!response.ok) throw new Error('無法獲取日期範圍');
         const data = await response.json();
         dateRanges = data.dateRanges || [];
 
@@ -98,17 +98,28 @@ function loadNavbar() {
                 filterCaregiverData(this.value.trim().toLowerCase());
             });
             fetchAndSetDateRanges();
+            checkAdmin(); // ★★★ 在此處新增呼叫
         })
         .catch(error => console.error('Error loading navbar:', error));
 }
-
+// ★★★ 在檔案中新增這個函式 ★★★
+function checkAdmin() {
+    fetch('/api/user', { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.loggedIn && data.user.role === 'admin') {
+                const adminLink = document.getElementById('admin-link');
+                if (adminLink) adminLink.style.display = 'block';
+            }
+        });
+}
 
 // (The functions from updateRegionOptions down to collectGroupData are unchanged)
 async function updateRegionOptions(hallId) {
     const regionSelect = document.getElementById('region');
     regionSelect.innerHTML = '<option value="">Loading...</option>';
     try {
-        const response = await fetch(`/getRegions?hall=${hallId}`);
+        const response = await fetch(`/getRegions?hall=${hallId}`, { credentials: 'include' }); // <-- 加上 credentials
         if (!response.ok) {
             throw new Error('Could not fetch community data');
         }
@@ -135,7 +146,7 @@ function getHallFromTitle() {
 }
 
 function fetchDataAndUpdateCheckboxes(selectedDate, hall, highlightGroup = null) {
-    fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`)
+    fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' }) // <-- 加上 credentials
         .then(response => response.json())
         .then(data => {
             formData = data.groupedData;
@@ -176,22 +187,29 @@ function renderCaregiverData(formData, options, highlightGroup = null) {
     }
 }
 
+
+
+// 建立 Checkbox 項目 (包含滑動刪除)
 function createCheckboxWrapper(caregiver, person, options) {
     const sliderWrapper = document.createElement('div');
     sliderWrapper.classList.add('slider-wrapper');
+
     const checkboxWrapper = document.createElement('div');
     checkboxWrapper.classList.add('checkbox-wrapper');
     checkboxWrapper.innerHTML = `<h4>${person.name}</h4>`;
+
     const deleteArea = document.createElement('div');
     deleteArea.classList.add('delete-area');
     const deleteBtn = document.createElement('button');
     deleteBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
-    deleteBtn.textContent = 'Delete';
+    deleteBtn.textContent = '刪除';
     deleteBtn.setAttribute('data-caregiver', caregiver);
     deleteBtn.setAttribute('data-name', person.name);
     deleteArea.appendChild(deleteBtn);
+
     sliderWrapper.appendChild(checkboxWrapper);
     sliderWrapper.appendChild(deleteArea);
+
     options.forEach(option => {
         const checkboxItem = document.createElement('div');
         checkboxItem.classList.add('checkbox-item');
@@ -207,46 +225,62 @@ function createCheckboxWrapper(caregiver, person, options) {
         checkboxWrapper.appendChild(checkboxItem);
     });
 
+    // ★ 修正 ★: 將滑動邏輯還原為原始版本，以匹配您的 styles.css
     if (window.innerWidth <= 600) {
-        let touchStartX = 0, currentTranslateX = 0, isSwiping = false;
-        // ★ UPDATE ★: Added opacity transition for a smoother effect.
-        deleteArea.style.opacity = '0';
-        deleteArea.style.transition = 'opacity 0.3s ease';
+        let touchStartX = 0;
+        let currentTranslateX = 0;
+        let isSwiping = false;
 
         sliderWrapper.addEventListener('touchstart', (e) => {
             if (e.touches && e.touches.length > 0) {
                 touchStartX = e.touches[0].clientX;
                 isSwiping = false;
                 checkboxWrapper.style.transition = 'none';
-                const match = (checkboxWrapper.style.transform || '').match(/translateX\(([-0-9]+)px\)/);
-                currentTranslateX = match ? parseInt(match[1], 10) : 0;
+                const transform = checkboxWrapper.style.transform || '';
+                const match = transform.match(/translateX\(([-0-9.]+)px\)/);
+                currentTranslateX = match ? parseFloat(match[1]) : 0;
             }
         });
+
         sliderWrapper.addEventListener('touchmove', (e) => {
             if (e.touches && e.touches.length > 0) {
-                const deltaX = e.touches[0].clientX - touchStartX;
+                const touchMoveX = e.touches[0].clientX;
+                const deltaX = touchMoveX - touchStartX;
+
                 if (Math.abs(deltaX) > 10) {
                     isSwiping = true;
-                    let translateX = Math.min(0, Math.max(-100, currentTranslateX + deltaX));
+                    let translateX = currentTranslateX + deltaX;
+                    translateX = Math.max(translateX, -100); // 最多滑動 100px
+                    translateX = Math.min(translateX, 0);   // 不允許向右滑動
                     checkboxWrapper.style.transform = `translateX(${translateX}px)`;
+                    
+                    // 根據滑動距離來控制刪除按鈕的顯示和位置
                     deleteArea.style.display = 'flex';
-                    // ★ UPDATE ★: Fade in the delete area as the user swipes.
-                    deleteArea.style.opacity = `${Math.abs(translateX) / 100}`;
+                    deleteArea.style.right = `${-translateX - 100}px`;
                 }
             }
         });
+
         sliderWrapper.addEventListener('touchend', () => {
             if (isSwiping) {
-                const match = (checkboxWrapper.style.transform || '').match(/translateX\(([-0-9]+)px\)/);
-                const translateX = match ? parseInt(match[1], 10) : 0;
+                const transform = checkboxWrapper.style.transform || '';
+                const match = transform.match(/translateX\(([-0-9.]+)px\)/);
+                const translateX = match ? parseFloat(match[1]) : 0;
+
                 checkboxWrapper.style.transition = 'transform 0.3s ease-out';
-                if (translateX <= -40) { // Threshold to snap open
+                if (translateX <= -40) { // 如果滑動超過 40px，則自動滑開
                     checkboxWrapper.style.transform = 'translateX(-100px)';
-                    deleteArea.style.opacity = '1';
-                } else {
+                    deleteArea.style.right = '0';
+                } else { // 否則，滑回去
                     checkboxWrapper.style.transform = 'translateX(0)';
-                    deleteArea.style.opacity = '0';
-                    setTimeout(() => (deleteArea.style.display = 'none'), 300);
+                    deleteArea.style.right = '-100px';
+                    // 動畫結束後再隱藏，避免閃爍
+                    setTimeout(() => {
+                        // 再次檢查確保使用者沒有在動畫期間再次滑動
+                        if (checkboxWrapper.style.transform === 'translateX(0px)') {
+                           deleteArea.style.display = 'none';
+                        }
+                    }, 300);
                 }
             }
         });
@@ -263,6 +297,7 @@ function deletePerson(caregiver, name) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hall, caregiver, name }),
+                credentials: 'include' // <-- 加上 credentials
             })
             .then(response => response.json())
             .then(data => {
@@ -291,7 +326,9 @@ function submitGroupChanges(caregiver, button) {
     fetch('/updateData', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ updatedData, hall, selectedDate, nameToRowIndexMap })
+            body: JSON.stringify({ updatedData, hall, selectedDate, nameToRowIndexMap }),
+            credentials: 'include' // <-- 加上 credentials
+
         })
         .then(response => response.json())
         .then(data => {
@@ -355,8 +392,11 @@ function showToast(message, type) {
 
 // Fetch and render statistics
 function fetchStats(selectedDate, hall) {
-    fetch(`/getStats?selectedDate=${selectedDate}&hall=${hall}`)
-        .then(response => response.json())
+    fetch(`/getStats?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' }) // <-- 加上 credentials
+    .then(response => {
+        if (!response.ok) { throw new Error('未授權或發生錯誤'); }
+        return response.json();
+    })
         .then(data => {
             renderStats(data);
             document.getElementById('stats-container').style.display = 'block';
@@ -444,6 +484,8 @@ function initializeHallPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newEntryData),
+        credentials: 'include' // <-- 加上 credentials
+    
       })
       .then(response => response.json())
       .then(data => {
