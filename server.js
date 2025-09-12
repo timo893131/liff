@@ -1,13 +1,25 @@
-// server.js (最終重構版 - 整合快取與代禱牆 API 優化)
-require('dotenv').config(); // 將 .env 檔案中的變數載入到 process.env
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const winston = require('winston'); // ★ UPDATE ★
 const config = require('./public/config');
-const sheetUtils = require('./utils/sheet'); // 引入重構後的 sheet 工具
+const sheetUtils = require('./utils/sheet');
 
+// --- Winston Logger 設定 --- ★ UPDATE ★
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    // - 在控制台（Console）顯示日誌
+    new winston.transports.Console({ format: winston.format.simple() }),
+    // - 可以取消註解來將日誌寫入檔案
+    // new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    // new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
 const app = express();
 const port = process.env.PORT || 3000;
 

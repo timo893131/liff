@@ -4,168 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>師大好牧人</title>
-  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/main.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  <!-- 導航欄容器 -->
   <div id="navbar-container"></div>
   
-  <!-- 首頁內容容器 -->
-  <div class="content-container ">
+  <div class="content-container">
     <h1 class="main-title">師大好牧人</h1>
-
-    <!-- 目標人數 -->
-    <div class="index-container">
-      <p>『我來了，是要叫羊得生命，並且得的更豐盛。我是好牧人，好牧人為羊捨命。』約十10~11</p>
+    <div class="target-container">
+      <p style="font-size: 1.2rem; line-height: 1.8;">
+        『我來了，是要叫羊得生命，並且得的更豐盛。我是好牧人，好牧人為羊捨命。』<br>— 約翰福音 十10~11
+      </p>
     </div>
-  
   </div>
 
-  <!-- 載入 Bootstrap 和自訂腳本 -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-// 載入 navbar.html
-function loadNavbar() {
-            fetch('navbar.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('navbar-container').innerHTML = data;
-                    // 載入完成後隱藏日期選單和搜尋框
-                    hideDateRangeAndSearch();
-                })
-                .catch(error => console.error('Error loading navbar:', error));
-        }
-
-        // 隱藏日期選單和搜尋框
-    function hideDateRangeAndSearch() {
-            const dateRangeSelect = document.getElementById('date-range');
-            const searchInput = document.getElementById('search-input');
-            const dateRangeContainer = document.getElementById('date-range-container');
-
-            if (dateRangeSelect) dateRangeSelect.style.display = 'none';
-            if (searchInput) searchInput.style.display = 'none';
-            if (dateRangeContainer) dateRangeContainer.style.display = 'none';
-        }
-
-    // 波浪效果
-    function applyWaveEffect() {
-      const title = document.getElementById('wave-title');
-      const text = title.textContent;
-      title.innerHTML = '';
-      text.split('').forEach((char, index) => {
-        const span = document.createElement('span');
-        span.textContent = char === ' ' ? '\u00A0' : char;
-        span.classList.add('wave-char');
-        span.style.setProperty('--char-index', index);
-        title.appendChild(span);
-      });
+    // 載入 navbar.html 並隱藏不需要的元素
+    function loadNavbar() {
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                const dateRangeContainer = document.getElementById('date-range-container');
+                if (dateRangeContainer) {
+                    dateRangeContainer.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error loading navbar:', error));
     }
-
-    // 倒數計時邏輯
-    function startCountdown() {
-      const targetDate = new Date('2025-03-29T15:00:00');
-      const now = new Date();
-      const timeLeft = targetDate - now;
-
-      const countdownContainer = document.querySelector('.countdown-container');
-      const urgentMessage = document.getElementById('urgent-message');
-
-      if (timeLeft <= 0) {
-        const title = document.getElementById('wave-title');
-        title.textContent = '青年大會已開始！';
-        applyWaveEffect();
-        document.getElementById('days').textContent = '0';
-        document.getElementById('hours').textContent = '0';
-        document.getElementById('minutes').textContent = '0';
-        document.getElementById('seconds').textContent = '0';
-        urgentMessage.style.display = 'none';
-        countdownContainer.classList.remove('urgent');
-        return;
-      }
-
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-      updateCountdownItem('days', days);
-      updateCountdownItem('hours', hours);
-      updateCountdownItem('minutes', minutes);
-      updateCountdownItem('seconds', seconds);
-
-      if (timeLeft < 7 * 24 * 60 * 60 * 1000) {
-        countdownContainer.classList.add('urgent');
-        urgentMessage.style.display = 'block';
-      } else {
-        countdownContainer.classList.remove('urgent');
-        urgentMessage.style.display = 'none';
-      }
-    }
-
-    function updateCountdownItem(id, value) {
-      const element = document.getElementById(id);
-      if (element.textContent !== value.toString()) {
-        element.textContent = value;
-        element.parentElement.classList.add('active');
-        setTimeout(() => element.parentElement.classList.remove('active'), 200);
-      }
-    }
-
-    // 從後端獲取目標人數數據
-    async function fetchTargetData() {
-      try {
-        const response = await fetch('/getTargetCount');
-        const data = await response.json();
-        const count = data.count || 0;
-        const remaining = 200 - count;
-        document.getElementById('remaining').textContent = remaining >= 0 ? remaining : 0;
-      } catch (error) {
-        console.error('Error fetching target count:', error);
-        document.getElementById('remaining').textContent = '無法載入';
-      }
-    }
-
-    // 從後端獲取報名名單
-    async function fetchSignupList() {
-      try {
-        const response = await fetch('/getSignupList');
-        if (!response.ok) {
-          throw new Error(`伺服器錯誤 (${response.status})`);
-        }
-        const data = await response.json();
-        const signupList = document.getElementById('signup-list');
-        signupList.innerHTML = ''; // 清空現有名單
-
-        if (data.names && data.names.length > 0) {
-          data.names.forEach((name, index) => {
-            const li = document.createElement('li');
-            li.classList.add('list-group-item');
-            li.textContent = `${index + 1}. ${name}`;
-            signupList.appendChild(li);
-          });
-        } else {
-          signupList.innerHTML = '<li class="list-group-item">目前尚無報名資料</li>';
-        }
-      } catch (error) {
-        console.error('Error fetching signup list:', error);
-        const signupList = document.getElementById('signup-list');
-        signupList.innerHTML = '<li class="list-group-item">無法載入名單，請稍後再試</li>';
-      }
-    }
-
-    // 初始化
-    loadNavbar();
-    applyWaveEffect();
-    startCountdown();
-    fetchTargetData();
-    setInterval(startCountdown, 1000);
-    setInterval(fetchTargetData, 60000);
-
-    // 在 Modal 顯示時觸發名單抓取
-    const signupListModal = document.getElementById('signupListModal');
-    signupListModal.addEventListener('shown.bs.modal', fetchSignupList);
+    // 頁面載入時執行
+    document.addEventListener('DOMContentLoaded', loadNavbar);
   </script>
 </body>
 </html>
