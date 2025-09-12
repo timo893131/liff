@@ -24,7 +24,7 @@ const logger = winston.createLogger({
 const app = express();
 const port = process.env.PORT || 3000;
 // --- 中介軟體設定 ---
-app.set('trust proxy', 1); // ★ 新增 ★: 信任 Render 的反向代理
+app.set('trust proxy', 1); // ★ 0新增 ★: 信任 Render 的反向代理
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors({
     origin: process.env.BASE_URL || 'http://localhost:3000', // 線上環境的網址

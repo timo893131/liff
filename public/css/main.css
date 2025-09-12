@@ -605,7 +605,7 @@ button:active, .btn:active {
 }
 
 /* 響應式設計 */
-@media (max-width: 600px) {
+@media (max-width: 650px) {
   h1 { font-size: 20px; }
   .container { padding: 15px; width: 95%; }
   button, .btn { padding: 8px 18px; font-size: 12px; }

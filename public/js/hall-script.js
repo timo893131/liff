@@ -185,6 +185,26 @@ function renderCaregiverData(formData, options, highlightGroup = null) {
             setTimeout(() => caregiverDiv.classList.remove('highlight'), 2000);
         }
     }
+     // ★★★ 新增：手機版滑動提示動畫 ★★★
+    // 在所有資料都渲染完成後執行
+    const firstSlider = document.querySelector('.slider-wrapper');
+    // 確保頁面上有至少一個點名項目，並且是在手機螢幕寬度下
+    if (firstSlider && window.innerWidth <= 600) {
+        const checkboxWrapper = firstSlider.querySelector('.checkbox-wrapper');
+        if (checkboxWrapper) {
+            // 使用 setTimeout 確保瀏覽器有足夠時間渲染 DOM
+            setTimeout(() => {
+                checkboxWrapper.style.transition = 'transform 0.5s ease-in-out';
+                // 向左滑動 50px 來「偷看」刪除按鈕
+                checkboxWrapper.style.transform = 'translateX(-50px)';
+                
+                // 1.2 秒後，再滑回來
+                setTimeout(() => {
+                    checkboxWrapper.style.transform = 'translateX(0)';
+                }, 1200);
+            }, 500); // 延遲 0.5 秒後開始動畫
+        }
+    }
 }
 
 
