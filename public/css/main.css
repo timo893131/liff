@@ -294,13 +294,14 @@ h4 {
     display: flex;
     gap: var(--space-2);
     align-items: center;
+    margin-left: var(--space-3); /* 手機版使用較小的間距 */
   }
   #date-range-container .form-select {
-    width: 90px; /* 給予日期足夠寬度 */
+    width: 95px; /* 給予日期足夠寬度 */
     font-size: 10px;
   }
   #date-range-container .form-control {
-    width: 95px; /* 給予搜尋框足夠寬度 */
+    width: 90px; /* 給予搜尋框足夠寬度 */
     font-size: 10px;
   }
 }
