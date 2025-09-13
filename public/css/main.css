@@ -214,8 +214,13 @@ h4 {
   transition: transform 0.3s ease;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
-.slider-wrapper.is-open .checkbox-wrapper { transform: translateX(-100px); }
-.slider-wrapper.is-open .delete-area { transform: translateX(0); }
+/* ★★★ 核心修正：讓 is-open class 來驅動動畫 ★★★ */
+.slider-wrapper.is-open .checkbox-wrapper {
+  transform: translateX(-100px);
+}
+.slider-wrapper.is-open .delete-area {
+  transform: translateX(0);
+}
 
 /* 表單與輸入框 */
 .form-control, .form-select {
@@ -274,7 +279,7 @@ h4 {
 
 
 /* --- 5. 響應式設計 (RWD) --- */
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   body { padding-top: 70px; }
   .header-section h1 { font-size: 20px; }
   .container { width: 95%; padding: var(--space-4); }
@@ -291,11 +296,11 @@ h4 {
     align-items: center;
   }
   #date-range-container .form-select {
-    width: 100px; /* 給予日期足夠寬度 */
+    width: 90px; /* 給予日期足夠寬度 */
     font-size: 10px;
   }
   #date-range-container .form-control {
-    width: 100px; /* 給予搜尋框足夠寬度 */
+    width: 95px; /* 給予搜尋框足夠寬度 */
     font-size: 10px;
   }
 }

@@ -269,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * 建立 Checkbox 項目 (包含滑動刪除)
      */
+    // ★★★ 核心修正：重寫滑動邏輯 ★★★
     function createCheckboxWrapper(caregiver, person) {
         const sliderWrapper = document.createElement('div');
         sliderWrapper.classList.add('slider-wrapper');
@@ -280,68 +281,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteArea = document.createElement('div');
         deleteArea.classList.add('delete-area');
         const deleteBtn = document.createElement('button');
-        deleteBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
+        deleteBtn.classList.add('btn', 'btn-danger', 'btn-sm');
         deleteBtn.textContent = '刪除';
-        deleteBtn.setAttribute('data-caregiver', caregiver);
-        deleteBtn.setAttribute('data-name', person.name);
         deleteArea.appendChild(deleteBtn);
 
         sliderWrapper.appendChild(checkboxWrapper);
         sliderWrapper.appendChild(deleteArea);
 
         options.forEach(option => {
-            const checkboxItem = document.createElement('div');
-            checkboxItem.classList.add('checkbox-item');
+            const item = document.createElement('div');
+            item.className = 'checkbox-item';
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             const id = `${caregiver}-${person.name}-${option}`.replace(/\s/g, '-');
             checkbox.id = id;
-            checkbox.checked = person.attendance && person.attendance.includes(option);
+            checkbox.checked = person.attendance?.includes(option);
             const label = document.createElement('label');
             label.setAttribute('for', id);
             label.textContent = option;
-            checkboxItem.appendChild(checkbox);
-            checkboxItem.appendChild(label);
-            checkboxWrapper.appendChild(checkboxItem);
+            item.append(checkbox, label);
+            checkboxWrapper.appendChild(item);
         });
         
-        // 手機版滑動邏輯
-        if (window.innerWidth <= 600) {
+        if (window.innerWidth <= 768) {
             let touchStartX = 0;
-            let currentTranslateX = 0;
-            let isSwiping = false;
+            let touchEndX = 0;
 
             sliderWrapper.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                isSwiping = false;
-                checkboxWrapper.style.transition = 'none';
-                const transform = checkboxWrapper.style.transform || '';
-                const match = transform.match(/translateX\(([-0-9.]+)px\)/);
-                currentTranslateX = match ? parseFloat(match[1]) : 0;
-            });
+                touchStartX = e.targetTouches[0].clientX;
+            }, { passive: true });
 
             sliderWrapper.addEventListener('touchmove', (e) => {
-                const deltaX = e.touches[0].clientX - touchStartX;
-                if (Math.abs(deltaX) > 10) {
-                    isSwiping = true;
-                    let newTranslateX = currentTranslateX + deltaX;
-                    if (newTranslateX < -100) newTranslateX = -100;
-                    if (newTranslateX > 0) newTranslateX = 0;
-                    checkboxWrapper.style.transform = `translateX(${newTranslateX}px)`;
-                }
-            });
+                touchEndX = e.targetTouches[0].clientX;
+            }, { passive: true });
 
             sliderWrapper.addEventListener('touchend', () => {
-                if (isSwiping) {
-                    const transform = checkboxWrapper.style.transform || '';
-                    const match = transform.match(/translateX\(([-0-9.]+)px\)/);
-                    const finalTranslateX = match ? parseFloat(match[1]) : 0;
-                    checkboxWrapper.style.transition = 'transform 0.3s ease-out';
-                    if (finalTranslateX < -40) {
-                        checkboxWrapper.style.transform = 'translateX(-100px)';
-                    } else {
-                        checkboxWrapper.style.transform = 'translateX(0)';
-                    }
+                const deltaX = touchStartX - touchEndX;
+                // 向左滑動超過50px，且不是從右向左滑回來
+                if (deltaX > 50 && !sliderWrapper.classList.contains('is-open')) {
+                    sliderWrapper.classList.add('is-open');
+                }
+                // 向右滑動超過50px
+                if (deltaX < -50) {
+                    sliderWrapper.classList.remove('is-open');
                 }
             });
         }
@@ -349,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.addEventListener('click', () => deletePerson(caregiver, person.name));
         return sliderWrapper;
     }
+
 
     /**
      * 刪除名單
