@@ -1,4 +1,4 @@
-// server.js (最終完整版)
+// server.js (最終完美修復版)
 
 require('dotenv').config();
 const express = require('express');
@@ -10,14 +10,13 @@ const passport = require('passport');
 const LineStrategy = require('passport-line').Strategy;
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
+const helmet = require('helmet');
 const { google } = require('googleapis');
 const config = require('./public/config');
 const sheetUtils = require('./utils/sheet');
 
-// --- 環境變數設定 ---
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// --- Winston Logger 設定 ---
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
@@ -29,8 +28,21 @@ const logger = winston.createLogger({
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- 中介軟體設定 ---
-app.set('trust proxy', 1); // 信任 Render 的反向代理
+app.set('trust proxy', 1);
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
+      styleSrc: ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "https://cdn.jsdelivr.net", "ws:"],
+    },
+  })
+);
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors({
     origin: process.env.BASE_URL || 'http://localhost:3000',
@@ -42,18 +54,17 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'a_very_secret_key_for_development',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-        secure: IS_PRODUCTION, // 線上環境使用安全 cookie
+    cookie: {
+        secure: IS_PRODUCTION,
         httpOnly: true,
         sameSite: 'lax'
-    } 
+    }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// --- Google Sheets API 設定 ---
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const credentials = process.env.GOOGLE_CREDENTIALS 
+const credentials = process.env.GOOGLE_CREDENTIALS
     ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
     : require('./credentials.json');
 const auth = new google.auth.GoogleAuth({
@@ -62,7 +73,6 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
-// --- Passport 與 LINE Login 設定 ---
 passport.use(new LineStrategy({
     channelID: process.env.LINE_CHANNEL_ID,
     channelSecret: process.env.LINE_CHANNEL_SECRET,
@@ -94,7 +104,6 @@ passport.use(new LineStrategy({
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
-// --- 輔助函式 & 權限中介軟體 ---
 function handleError(res, error, message, statusCode = 500) {
     logger.error(message, { error: error.message, stack: error.stack });
     res.status(statusCode).json({ message, error: error.message });
@@ -136,7 +145,6 @@ function isAdmin(req, res, next) {
   return res.status(403).json({ error: 'Forbidden: Admins only' });
 }
 
-// --- 認證 & 使用者管理 API ---
 app.get('/auth/line', passport.authenticate('line'));
 app.get('/auth/line/callback', passport.authenticate('line', { successRedirect: '/', failureRedirect: '/login.html' }));
 app.get('/auth/logout', (req, res, next) => {
@@ -181,7 +189,6 @@ app.post('/api/users/update-role', isAuthenticated, isAdmin, async (req, res) =>
     }
 });
 
-// --- 點名系統 API ---
 app.get('/getDateRanges', isAuthenticated, async (req, res) => {
     try {
         const range = "'設定'!A2:A";
@@ -195,6 +202,8 @@ app.get('/getDateRanges', isAuthenticated, async (req, res) => {
         handleError(res, error, 'Error fetching date ranges');
     }
 });
+
+// ★★★ 核心修改處 ★★★
 app.get('/getData', isAuthenticated, validateHall, async (req, res) => {
     const { selectedDate } = req.query;
     try {
@@ -204,10 +213,19 @@ app.get('/getData', isAuthenticated, validateHall, async (req, res) => {
         const groupedData = {};
         const nameToRowIndexMap = {};
         sheetData.forEach((row, rowIndex) => {
-            if (!Array.isArray(row) || row.length < 4) return;
+            if (!Array.isArray(row) || row.length < 3) return; // 至少要有名字
             const name = row[2] ? row[2].trim() : '';
-            const caregiver = row[3] ? row[3].trim() : '';
-            if (!name || !caregiver || name === '姓名' || caregiver === '照顧者') return;
+            // 1. 將 const 改為 let
+            let caregiver = row[3] ? row[3].trim() : ''; 
+
+            // 2. 修改判斷條件，只檢查 name
+            if (!name || name === '姓名') return; 
+
+            // 3. 如果 caregiver 是空的，就賦予新值
+            if (!caregiver) {
+                caregiver = '無牧之羊';
+            }
+
             const selectedColumnIndex = config.VALID_COLUMNS.indexOf(selectedDate);
             const attendance = (row[6 + selectedColumnIndex] || '').split(',').map(s => s.trim());
             if (!groupedData[caregiver]) groupedData[caregiver] = [];
@@ -219,14 +237,15 @@ app.get('/getData', isAuthenticated, validateHall, async (req, res) => {
         handleError(res, err, 'Error retrieving sheet data');
     }
 });
+
 app.post('/addNewData', isAuthenticated, validateHall, async (req, res) => {
     const { name, identity, region, caregiver, department } = req.body;
     try {
-        if (!name || !identity || !region || !caregiver) return res.status(400).json({ message: 'Missing required parameters' });
+        if (!name || !identity || !region) return res.status(400).json({ message: '缺少必要參數' });
         const rangeData = await sheetUtils.getSheetData(`'${req.sheetName}'!C12:C`);
         const targetRow = 12 + (rangeData ? rangeData.length : 0);
         const serialNumber = `=row()-12`;
-        const newRow = [[serialNumber, region, name, caregiver, identity, department || '']];
+        const newRow = [[serialNumber, region, name, caregiver || '', identity, department || '']];
         const range = `'${req.sheetName}'!A${targetRow}`;
         await sheetUtils.updateSheetData(range, newRow);
         res.status(200).json({ message: 'Data added successfully' });
@@ -234,15 +253,23 @@ app.post('/addNewData', isAuthenticated, validateHall, async (req, res) => {
         handleError(res, error, 'Error adding new data');
     }
 });
+
 app.post('/deleteData', isAuthenticated, validateHall, async (req, res) => {
-    const { caregiver, name } = req.body;
+    let { caregiver, name } = req.body;
+    // 如果傳來的 caregiver 是 "無牧之羊"，在尋找時要把它當作空字串
+    if (caregiver === '無牧之羊') {
+        caregiver = '';
+    }
     try {
         const sheetInfo = await sheetUtils.sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
         const sheet = sheetInfo.data.sheets.find(s => s.properties.title === req.sheetName);
         if (!sheet) return res.status(404).json({ message: `Sheet not found: ${req.sheetName}` });
         const RANGE = `'${req.sheetName}'!A12:D`;
         const sheetData = await sheetUtils.getSheetData(RANGE);
-        const rowToDelete = sheetData.findIndex(row => (row[2] && row[2].trim() === name) && (row[3] && row[3].trim() === caregiver));
+        const rowToDelete = sheetData.findIndex(row => 
+            (row[2] && row[2].trim() === name) && 
+            ((row[3] || '').trim() === caregiver) // 修正比對邏輯，將 undefined 視為空字串
+        );
         if (rowToDelete === -1) return res.status(404).json({ message: 'Record not found' });
         const rowIndexToDelete = rowToDelete + 11;
         await sheetUtils.deleteSheetRows(sheet.properties.sheetId, rowIndexToDelete, rowIndexToDelete + 1);
@@ -251,6 +278,7 @@ app.post('/deleteData', isAuthenticated, validateHall, async (req, res) => {
         handleError(res, error, 'Error deleting data');
     }
 });
+
 app.post('/updateData', isAuthenticated, validateHall, async (req, res) => {
     const { updatedData, nameToRowIndexMap, selectedDate } = req.body;
     try {
@@ -300,10 +328,9 @@ app.get('/getStats', isAuthenticated, validateHall, async (req, res) => {
         options.forEach(option => stats[option] = 0);
         const selectedColumnIndex = config.VALID_COLUMNS.indexOf(selectedDate);
         sheetData.forEach(row => {
-            if (!Array.isArray(row) || row.length < 4) return;
+            if (!Array.isArray(row) || row.length < 3) return;
             const name = row[2] ? row[2].trim() : '';
-            const caregiver = row[3] ? row[3].trim() : '';
-            if (!name || !caregiver || name === '姓名' || caregiver === '照顧者') return;
+            if (!name || name === '姓名') return;
             stats['總數']++;
             const attendanceString = row[6 + selectedColumnIndex] || '';
             const attendance = attendanceString.split(',').map(s => s.trim()).filter(Boolean);
@@ -315,7 +342,6 @@ app.get('/getStats', isAuthenticated, validateHall, async (req, res) => {
     }
 });
 
-// --- 3/29 青年大會 API (公開) ---
 app.get('/getTargetCount', async (req, res) => {
     try {
         const range = "'3/29青年大會'!I3";
@@ -337,113 +363,75 @@ app.get('/getSignupList', async (req, res) => {
     }
 });
 
-// --- 代禱牆 API (全新修正版) ---
 const PRAYER_SHEET_NAME = config.PRAYER_SHEET || '活力組代禱牆';
 
-// 獲取指定群組的代禱事項
 app.get('/api/prayer-items', isAuthenticated, validatePrayerHall, async (req, res) => {
     try {
         const { nameCol, itemCol } = req.groupInfo;
-        // ★ 修正 ★: 從第 3 列開始讀取
         const range = `'${PRAYER_SHEET_NAME}'!${String.fromCharCode(65 + nameCol)}3:${String.fromCharCode(65 + itemCol)}`;
         const sheetData = await sheetUtils.getSheetData(range);
-        
         const items = (sheetData || []).map((row, index) => ({
-            // ★ 修正 ★: id 現在是索引值 + 3
-            id: index + 3,
-            name: row[0] || '',
-            item: row[1] || ''
-        })).filter(d => d.name && d.name.trim() !== ''); // 只回傳有名字的項目
-
+            id: index + 3, name: row[0] || '', item: row[1] || ''
+        })).filter(d => d.name && d.name.trim() !== '');
         res.json(items);
     } catch (err) {
         handleError(res, err, 'Error retrieving prayer items');
     }
 });
 
-// ★★★ 核心修正：更新「新增代禱事項」的邏輯 ★★★
 app.post('/api/prayer-items', isAuthenticated, validatePrayerHall, async (req, res) => {
     const { name, item } = req.body;
     if (!name || !item) {
         return res.status(400).json({ message: '姓名和代禱事項為必填' });
     }
-    
     try {
         const { nameCol } = req.groupInfo;
         const nameColLetter = String.fromCharCode(65 + nameCol);
-        
-        // 1. 讀取整個姓名欄位的資料，以找出空行
-        const allNamesInRange = await sheetUtils.getSheetData(`'${PRAYER_SHEET_NAME}'!${nameColLetter}3:1000`); // 假設最多1000筆
-        
-        let targetRow;
-        // 2. 尋找第一個空行
+        const allNamesInRange = await sheetUtils.getSheetData(`'${PRAYER_SHEET_NAME}'!${nameColLetter}3:1000`);
         const firstEmptyRowIndex = allNamesInRange.findIndex(row => !row || !row[0] || row[0].trim() === '');
-        
-        if (firstEmptyRowIndex !== -1) {
-            // 如果找到了空行，就使用那個空行的行號
-            targetRow = 3 + firstEmptyRowIndex;
-        } else {
-            // 如果沒有找到任何空行，則在列表末尾新增
-            targetRow = 3 + (allNamesInRange.length || 0);
-        }
-        
+        const targetRow = (firstEmptyRowIndex !== -1) ? 3 + firstEmptyRowIndex : 3 + (allNamesInRange.length || 0);
         const range = `'${PRAYER_SHEET_NAME}'!${nameColLetter}${targetRow}`;
         await sheetUtils.updateSheetData(range, [[name, item]]);
-        
         res.status(201).json({ message: '代禱事項新增成功' });
     } catch (error) {
         handleError(res, error, 'Error adding prayer item');
     }
 });
 
-// 更新代禱事項
 app.put('/api/prayer-items/:id', isAuthenticated, validatePrayerHall, async (req, res) => {
     const { id } = req.params;
     const { name, item } = req.body;
     const rowNum = parseInt(id, 10);
-
     if (isNaN(rowNum) || !name || !item) {
         return res.status(400).json({ message: '無效的 ID 或缺少姓名/代禱事項' });
     }
-
     try {
         const { nameCol } = req.groupInfo;
         const nameColLetter = String.fromCharCode(65 + nameCol);
         const range = `'${PRAYER_SHEET_NAME}'!${nameColLetter}${rowNum}`;
         await sheetUtils.updateSheetData(range, [[name, item]]);
-
         res.json({ message: '代禱事項更新成功' });
     } catch (error) {
         handleError(res, error, 'Error updating prayer item');
     }
 });
 
-// 刪除代禱事項
 app.delete('/api/prayer-items/:id', isAuthenticated, validatePrayerHall, async (req, res) => {
     const { id } = req.params;
     const rowNum = parseInt(id, 10);
-
     if (isNaN(rowNum)) {
         return res.status(400).json({ message: '無效的 ID' });
     }
-
     try {
         const { nameCol, itemCol } = req.groupInfo;
         const range = `'${PRAYER_SHEET_NAME}'!${String.fromCharCode(65 + nameCol)}${rowNum}:${String.fromCharCode(65 + itemCol)}${rowNum}`;
-        
-        // ★ 修正 ★: 刪除操作現在是將該行的內容清空
-        // 這樣做不會影響其他事項的行號 (ID)，前端體驗會更好。
-        // 前後端的讀取和新增邏輯已能正確處理空行。
         await sheetUtils.clearSheetData(range);
-
         res.json({ message: '代禱事項刪除成功' });
     } catch (error) {
         handleError(res, error, 'Error deleting prayer item');
     }
 });
 
-
-// --- 啟動伺服器 ---
 app.listen(port, () => {
   logger.info(`Server is running in ${IS_PRODUCTION ? 'production' : 'development'} mode on port ${port}`);
 });

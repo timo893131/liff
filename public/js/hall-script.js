@@ -1,593 +1,593 @@
-// public/js/hall-script.js (Final Polished Version)
+// public/js/hall-script.js (最終完美修復版)
 
-// --- Global Variables ---
-let formData = {};
-let nameToRowIndexMap = {};
-let lastFormData = null;
-const options = ['有主日(早上)', '聖經講座(晚上)', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
+document.addEventListener('DOMContentLoaded', () => {
+    // --- 全局變數 ---
+    let formData = {};
+    let nameToRowIndexMap = {};
+    let lastFormData = null;
+    let isSubButtonsVisible = false;
+    let dateRanges = [];
+    const options = ['有主日(早上)', '聖經講座(晚上)', '有小排', '家聚會(讀經)', '家聚會(讀其他、福音餐廳)', '有聯絡有回應', '有聯絡未回應'];
+    const HALL_NAME_MAP = {
+        'hall3': '3會所',
+        'hall3e': '3會所英語區',
+        'hall62': '62會所',
+        'hall71': '71會所',
+        'hall82': '82會所',
+        'hall103': '103會所'
+    };
 
-// --- DOM Elements ---
-const toastEl = document.getElementById('submit-toast');
-const toast = new bootstrap.Toast(toastEl);
-const mainButton = document.getElementById('main-floating-button');
-const subButtons = document.getElementById('sub-buttons');
-let isSubButtonsVisible = false;
-let dateRanges = [];
+    // --- DOM 元素 ---
+    const toastEl = document.getElementById('submit-toast');
+    const toast = new bootstrap.Toast(toastEl);
+    const mainButton = document.getElementById('main-floating-button');
+    const subButtons = document.getElementById('sub-buttons');
 
-// --- Core Functions ---
+    // --- ★★★ 核心函式 (已整合在此作用域內) ★★★ ---
 
-// Fetch and set date ranges from the backend
-async function fetchAndSetDateRanges() {
-    try {
-        const response = await fetch('/getDateRanges', { credentials: 'include' }); // <-- 加上 credentials
-        if (!response.ok) throw new Error('無法獲取日期範圍');
-        const data = await response.json();
-        dateRanges = data.dateRanges || [];
-
-        const dateRangeSelect = document.getElementById('date-range');
-        if (dateRangeSelect) {
-            populateDateRangeSelect(dateRangeSelect);
-            setDefaultDate(dateRangeSelect);
-        }
-    } catch (error) {
-        console.error('Error fetching date ranges:', error);
-        showToast('Could not load date ranges, please check the server', 'danger');
+    /**
+     * 從 URL 參數獲取當前的會所 ID
+     */
+    function getHallFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id') || 'hall3'; // 預設返回 'hall3'
     }
-}
 
-// Populate the date dropdown
-function populateDateRangeSelect(selectElement) {
-    selectElement.innerHTML = '<option value="" disabled>Please select a date range</option>';
-    if (dateRanges.length > 0) {
-        dateRanges.forEach((date) => {
-            const option = document.createElement('option');
-            option.value = date.code;
-            option.textContent = date.range;
-            selectElement.appendChild(option);
-        });
-    } else {
-        selectElement.innerHTML = '<option value="">No dates available</option>';
-    }
-}
-
-// Set the default date based on the current date
-function setDefaultDate(selectElement) {
-    if (dateRanges.length === 0) return;
-    const currentDate = new Date();
-    let defaultCode = dateRanges[0].code;
-
-    for (const range of dateRanges) {
-        const [startStr, endStr] = range.range.split('~');
-        const currentYear = new Date().getFullYear();
-        const startDate = new Date(`${currentYear}/${startStr}`);
-        const endDate = new Date(`${currentYear}/${endStr}`);
-        endDate.setHours(23, 59, 59, 999);
-        if (currentDate >= startDate && currentDate <= endDate) {
-            defaultCode = range.code;
-            break;
+    /**
+     * 根據會所 ID 更新頁面標題和 H1
+     */
+    function updatePageContent(hall) {
+        const hallDisplayName = HALL_NAME_MAP[hall] || '點名系統';
+        document.title = hallDisplayName;
+        const hallTitleSpan = document.getElementById('hall-title');
+        if (hallTitleSpan) {
+            hallTitleSpan.textContent = hallDisplayName;
         }
     }
-    selectElement.value = defaultCode;
-    fetchDataAndUpdateCheckboxes(defaultCode, getHallFromTitle());
-}
 
-// Format date range display from a date code
-function formatDateRange(dateCode) {
-    const found = dateRanges.find(r => r.code === dateCode);
-    return found ? found.range : 'Loading...';
-}
+    /**
+     * ★★★ 已修正：確保此函式在作用域內可被呼叫 ★★★
+     * 顯示 Toast 提示
+     */
+    function showToast(message, type = 'info') {
+        const toastBody = toastEl.querySelector('.toast-body');
+        toastBody.textContent = message;
+        toastEl.className = 'toast'; // 重設 class
+        toastEl.classList.add(`text-bg-${type}`);
+        toast.show();
+    }
 
-// Load the navbar and bind its events
-function loadNavbar() {
-    fetch('navbar.html')
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('navbar-container').innerHTML = data;
-            document.getElementById('date-range').addEventListener('change', function() {
-                if(this.value) {
-                    const hall = getHallFromTitle();
-                    const isStatsVisible = document.getElementById('stats-container').style.display === 'block';
-                    if (isStatsVisible) {
-                        fetchStats(this.value, hall);
-                    } else {
-                        fetchDataAndUpdateCheckboxes(this.value, hall);
-                    }
-                }
-            });
-            document.getElementById('search-input').addEventListener('input', function() {
-                filterCaregiverData(this.value.trim().toLowerCase());
-            });
-            fetchAndSetDateRanges();
-            checkAdmin(); // ★★★ 在此處新增呼叫
-        })
-        .catch(error => console.error('Error loading navbar:', error));
-}
-// ★★★ 在檔案中新增這個函式 ★★★
-function checkAdmin() {
-    fetch('/api/user', { credentials: 'include' })
-        .then(res => res.json())
-        .then(data => {
-            if (data.loggedIn && data.user.role === 'admin') {
-                const adminLink = document.getElementById('admin-link');
-                if (adminLink) adminLink.style.display = 'block';
+    /**
+     * 從後端獲取並設定日期範圍
+     */
+    async function fetchAndSetDateRanges() {
+        try {
+            const response = await fetch('/getDateRanges', { credentials: 'include' });
+            if (!response.ok) throw new Error('無法獲取日期範圍');
+            const data = await response.json();
+            dateRanges = data.dateRanges || [];
+
+            const dateRangeSelect = document.getElementById('date-range');
+            if (dateRangeSelect) {
+                populateDateRangeSelect(dateRangeSelect);
+                setDefaultDate(dateRangeSelect);
             }
-        });
-}
-
-// (The functions from updateRegionOptions down to collectGroupData are unchanged)
-async function updateRegionOptions(hallId) {
-    const regionSelect = document.getElementById('region');
-    regionSelect.innerHTML = '<option value="">Loading...</option>';
-    try {
-        const response = await fetch(`/getRegions?hall=${hallId}`, { credentials: 'include' }); // <-- 加上 credentials
-        if (!response.ok) {
-            throw new Error('Could not fetch community data');
+        } catch (error) {
+            console.error('Error fetching date ranges:', error);
+            showToast('無法載入日期範圍，請檢查伺服器', 'danger');
         }
-        const regions = await response.json();
-        regionSelect.innerHTML = '<option value="" disabled selected>Select community</option>';
-        if (regions.length > 0) {
-            regions.forEach(region => {
+    }
+
+    /**
+     * 填充日期下拉選單
+     */
+    function populateDateRangeSelect(selectElement) {
+        selectElement.innerHTML = '<option value="" disabled>請選擇日期</option>';
+        if (dateRanges.length > 0) {
+            dateRanges.forEach((date) => {
                 const option = document.createElement('option');
-                option.value = region;
-                option.textContent = region;
-                regionSelect.appendChild(option);
+                option.value = date.code;
+                option.textContent = date.range;
+                selectElement.appendChild(option);
             });
         } else {
-            regionSelect.innerHTML = '<option value="">No community data for this hall</option>';
-        }
-    } catch (error) {
-        console.error('Error fetching regions:', error);
-        regionSelect.innerHTML = '<option value="">Load failed</option>';
-    }
-}
-
-function getHallFromTitle() {
-    return document.title.toLowerCase();
-}
-
-function fetchDataAndUpdateCheckboxes(selectedDate, hall, highlightGroup = null) {
-    fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' }) // <-- 加上 credentials
-        .then(response => response.json())
-        .then(data => {
-            formData = data.groupedData;
-            nameToRowIndexMap = data.nameToRowIndexMap;
-            document.getElementById('current-date').textContent = formatDateRange(selectedDate);
-            renderCaregiverData(formData, options, highlightGroup);
-        })
-        .catch(err => {
-            console.error('Error fetching data:', err);
-            showToast('Error fetching data, please try again later', 'danger');
-        });
-}
-
-function renderCaregiverData(formData, options, highlightGroup = null) {
-    const checkboxContainer = document.querySelector('#checkbox-container');
-    checkboxContainer.innerHTML = '';
-    for (let caregiver in formData) {
-        const caregiverDiv = document.createElement('div');
-        caregiverDiv.classList.add('caregiver-group');
-        caregiverDiv.innerHTML = `<h3>${caregiver}:</h3>`;
-        formData[caregiver].forEach(person => {
-            const checkboxWrapper = createCheckboxWrapper(caregiver, person, options);
-            caregiverDiv.appendChild(checkboxWrapper);
-        });
-
-        const submitButton = document.createElement('button');
-        submitButton.classList.add('btn', 'submit-group-btn');
-        submitButton.innerHTML = '<span>✔</span> Submit';
-        submitButton.addEventListener('click', (event) => submitGroupChanges(caregiver, event.target));
-        caregiverDiv.appendChild(submitButton);
-
-        checkboxContainer.appendChild(caregiverDiv);
-
-        if (highlightGroup === caregiver) {
-            caregiverDiv.classList.add('highlight');
-            setTimeout(() => caregiverDiv.classList.remove('highlight'), 2000);
+            selectElement.innerHTML = '<option value="">無可用日期</option>';
         }
     }
-     // ★★★ 新增：手機版滑動提示動畫 ★★★
-    // 在所有資料都渲染完成後執行
-    const firstSlider = document.querySelector('.slider-wrapper');
-    // 確保頁面上有至少一個點名項目，並且是在手機螢幕寬度下
-    if (firstSlider && window.innerWidth <= 600) {
-        const checkboxWrapper = firstSlider.querySelector('.checkbox-wrapper');
-        if (checkboxWrapper) {
-            // 使用 setTimeout 確保瀏覽器有足夠時間渲染 DOM
-            setTimeout(() => {
-                checkboxWrapper.style.transition = 'transform 0.5s ease-in-out';
-                // 向左滑動 50px 來「偷看」刪除按鈕
-                checkboxWrapper.style.transform = 'translateX(-50px)';
-                
-                // 1.2 秒後，再滑回來
+
+    /**
+     * 設定預設日期
+     */
+    function setDefaultDate(selectElement) {
+        if (dateRanges.length === 0) return;
+        const currentDate = new Date();
+        let defaultCode = dateRanges[0].code;
+
+        for (const range of dateRanges) {
+            const [startStr, endStr] = range.range.split('~');
+            const currentYear = new Date().getFullYear();
+            const startDate = new Date(`${currentYear}/${startStr}`);
+            const endDate = new Date(`${currentYear}/${endStr}`);
+            endDate.setHours(23, 59, 59, 999);
+            if (currentDate >= startDate && currentDate <= endDate) {
+                defaultCode = range.code;
+                break;
+            }
+        }
+        selectElement.value = defaultCode;
+        fetchDataAndUpdateCheckboxes(defaultCode, getHallFromURL());
+    }
+
+    /**
+     * 格式化日期範圍顯示
+     */
+    function formatDateRange(dateCode) {
+        const found = dateRanges.find(r => r.code === dateCode);
+        return found ? found.range : '載入中...';
+    }
+
+    /**
+     * 載入導覽列並綁定事件
+     */
+    function loadNavbar() {
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+                document.getElementById('date-range').addEventListener('change', function() {
+                    if (this.value) {
+                        const hall = getHallFromURL();
+                        const isStatsVisible = document.getElementById('stats-container').style.display === 'block';
+                        if (isStatsVisible) {
+                            fetchStats(this.value, hall);
+                        } else {
+                            fetchDataAndUpdateCheckboxes(this.value, hall);
+                        }
+                    }
+                });
+                document.getElementById('search-input').addEventListener('input', function() {
+                    filterCaregiverData(this.value.trim().toLowerCase());
+                });
+                fetchAndSetDateRanges();
+                checkAdmin();
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    }
+
+    /**
+     * 檢查管理員權限
+     */
+    function checkAdmin() {
+        fetch('/api/user', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.loggedIn && data.user.role === 'admin') {
+                    const adminLink = document.getElementById('admin-link');
+                    if (adminLink) adminLink.style.display = 'block';
+                }
+            });
+    }
+
+    /**
+     * 更新小區選項
+     */
+    async function updateRegionOptions(hallId) {
+        const regionSelect = document.getElementById('region');
+        regionSelect.innerHTML = '<option value="">載入中...</option>';
+        try {
+            const response = await fetch(`/getRegions?hall=${hallId}`, { credentials: 'include' });
+            if (!response.ok) throw new Error('無法獲取小區資料');
+            const regions = await response.json();
+            regionSelect.innerHTML = '<option value="" disabled selected>請選擇小區</option>';
+            if (regions.length > 0) {
+                regions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region;
+                    option.textContent = region;
+                    regionSelect.appendChild(option);
+                });
+            } else {
+                regionSelect.innerHTML = '<option value="">此會所無小區資料</option>';
+            }
+        } catch (error) {
+            console.error('Error fetching regions:', error);
+            regionSelect.innerHTML = '<option value="">載入失敗</option>';
+        }
+    }
+
+    /**
+     * 抓取並更新 Checkbox 資料
+     */
+    function fetchDataAndUpdateCheckboxes(selectedDate, hall, highlightGroup = null) {
+        const checkboxContainer = document.querySelector('#checkbox-container');
+        checkboxContainer.innerHTML = `<div class="d-flex justify-content-center mt-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
+
+        fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                formData = data.groupedData;
+                nameToRowIndexMap = data.nameToRowIndexMap;
+                document.getElementById('current-date').textContent = formatDateRange(selectedDate);
+                renderCaregiverData(formData, highlightGroup);
+            })
+            .catch(err => {
+                console.error('Error fetching data:', err);
+                checkboxContainer.innerHTML = `<div class="alert alert-danger">資料載入失敗，請稍後再試。</div>`;
+                showToast('資料載入失敗', 'danger');
+            });
+    }
+
+    /**
+     * 渲染牧人與名單
+     */
+    function renderCaregiverData(dataToRender, highlightGroup = null) {
+        const checkboxContainer = document.querySelector('#checkbox-container');
+        checkboxContainer.innerHTML = '';
+        if (Object.keys(dataToRender).length === 0) {
+            checkboxContainer.innerHTML = '<p class="text-center text-muted mt-3">此日期範圍尚無名單資料。</p>';
+            return;
+        }
+        for (let caregiver in dataToRender) {
+            const caregiverDiv = document.createElement('div');
+            caregiverDiv.classList.add('caregiver-group');
+            caregiverDiv.innerHTML = `<h3>${caregiver}</h3>`;
+            dataToRender[caregiver].forEach(person => {
+                const checkboxWrapper = createCheckboxWrapper(caregiver, person);
+                caregiverDiv.appendChild(checkboxWrapper);
+            });
+
+            const submitButton = document.createElement('button');
+            submitButton.classList.add('btn', 'btn-info', 'btn-sm', 'mt-2', 'submit-group-btn');
+            submitButton.innerHTML = '<span>✔</span> 提交本組修改';
+            submitButton.addEventListener('click', (event) => submitGroupChanges(caregiver, event.target));
+            caregiverDiv.appendChild(submitButton);
+
+            checkboxContainer.appendChild(caregiverDiv);
+
+            if (highlightGroup === caregiver) {
+                caregiverDiv.classList.add('highlight');
+                setTimeout(() => caregiverDiv.classList.remove('highlight'), 2000);
+            }
+        }
+        
+        // ★★★ 已恢復：手機版滑動提示動畫 ★★★
+        const firstSlider = document.querySelector('.slider-wrapper');
+        if (firstSlider && window.innerWidth <= 600) {
+            const checkboxWrapper = firstSlider.querySelector('.checkbox-wrapper');
+            if (checkboxWrapper) {
                 setTimeout(() => {
-                    checkboxWrapper.style.transform = 'translateX(0)';
-                }, 1200);
-            }, 500); // 延遲 0.5 秒後開始動畫
+                    checkboxWrapper.style.transition = 'transform 0.5s ease-in-out';
+                    checkboxWrapper.style.transform = 'translateX(-50px)';
+                    setTimeout(() => {
+                        checkboxWrapper.style.transform = 'translateX(0)';
+                    }, 1200);
+                }, 500);
+            }
         }
     }
-}
+    
+    /**
+     * 建立 Checkbox 項目 (包含滑動刪除)
+     */
+    function createCheckboxWrapper(caregiver, person) {
+        const sliderWrapper = document.createElement('div');
+        sliderWrapper.classList.add('slider-wrapper');
 
+        const checkboxWrapper = document.createElement('div');
+        checkboxWrapper.classList.add('checkbox-wrapper');
+        checkboxWrapper.innerHTML = `<h4>${person.name}</h4>`;
 
+        const deleteArea = document.createElement('div');
+        deleteArea.classList.add('delete-area');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
+        deleteBtn.textContent = '刪除';
+        deleteBtn.setAttribute('data-caregiver', caregiver);
+        deleteBtn.setAttribute('data-name', person.name);
+        deleteArea.appendChild(deleteBtn);
 
-// 建立 Checkbox 項目 (包含滑動刪除)
-function createCheckboxWrapper(caregiver, person, options) {
-    const sliderWrapper = document.createElement('div');
-    sliderWrapper.classList.add('slider-wrapper');
+        sliderWrapper.appendChild(checkboxWrapper);
+        sliderWrapper.appendChild(deleteArea);
 
-    const checkboxWrapper = document.createElement('div');
-    checkboxWrapper.classList.add('checkbox-wrapper');
-    checkboxWrapper.innerHTML = `<h4>${person.name}</h4>`;
+        options.forEach(option => {
+            const checkboxItem = document.createElement('div');
+            checkboxItem.classList.add('checkbox-item');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            const id = `${caregiver}-${person.name}-${option}`.replace(/\s/g, '-');
+            checkbox.id = id;
+            checkbox.checked = person.attendance && person.attendance.includes(option);
+            const label = document.createElement('label');
+            label.setAttribute('for', id);
+            label.textContent = option;
+            checkboxItem.appendChild(checkbox);
+            checkboxItem.appendChild(label);
+            checkboxWrapper.appendChild(checkboxItem);
+        });
+        
+        // 手機版滑動邏輯
+        if (window.innerWidth <= 600) {
+            let touchStartX = 0;
+            let currentTranslateX = 0;
+            let isSwiping = false;
 
-    const deleteArea = document.createElement('div');
-    deleteArea.classList.add('delete-area');
-    const deleteBtn = document.createElement('button');
-    deleteBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
-    deleteBtn.textContent = '刪除';
-    deleteBtn.setAttribute('data-caregiver', caregiver);
-    deleteBtn.setAttribute('data-name', person.name);
-    deleteArea.appendChild(deleteBtn);
-
-    sliderWrapper.appendChild(checkboxWrapper);
-    sliderWrapper.appendChild(deleteArea);
-
-    options.forEach(option => {
-        const checkboxItem = document.createElement('div');
-        checkboxItem.classList.add('checkbox-item');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `${caregiver}-${person.name}-${option}`;
-        checkbox.checked = person.attendance && person.attendance.includes(option);
-        const label = document.createElement('label');
-        label.setAttribute('for', checkbox.id);
-        label.textContent = option;
-        checkboxItem.appendChild(checkbox);
-        checkboxItem.appendChild(label);
-        checkboxWrapper.appendChild(checkboxItem);
-    });
-
-    // ★ 修正 ★: 將滑動邏輯還原為原始版本，以匹配您的 styles.css
-    if (window.innerWidth <= 600) {
-        let touchStartX = 0;
-        let currentTranslateX = 0;
-        let isSwiping = false;
-
-        sliderWrapper.addEventListener('touchstart', (e) => {
-            if (e.touches && e.touches.length > 0) {
+            sliderWrapper.addEventListener('touchstart', (e) => {
                 touchStartX = e.touches[0].clientX;
                 isSwiping = false;
                 checkboxWrapper.style.transition = 'none';
                 const transform = checkboxWrapper.style.transform || '';
                 const match = transform.match(/translateX\(([-0-9.]+)px\)/);
                 currentTranslateX = match ? parseFloat(match[1]) : 0;
-            }
-        });
+            });
 
-        sliderWrapper.addEventListener('touchmove', (e) => {
-            if (e.touches && e.touches.length > 0) {
-                const touchMoveX = e.touches[0].clientX;
-                const deltaX = touchMoveX - touchStartX;
-
+            sliderWrapper.addEventListener('touchmove', (e) => {
+                const deltaX = e.touches[0].clientX - touchStartX;
                 if (Math.abs(deltaX) > 10) {
                     isSwiping = true;
-                    let translateX = currentTranslateX + deltaX;
-                    translateX = Math.max(translateX, -100); // 最多滑動 100px
-                    translateX = Math.min(translateX, 0);   // 不允許向右滑動
-                    checkboxWrapper.style.transform = `translateX(${translateX}px)`;
-                    
-                    // 根據滑動距離來控制刪除按鈕的顯示和位置
-                    deleteArea.style.display = 'flex';
-                    deleteArea.style.right = `${-translateX - 100}px`;
+                    let newTranslateX = currentTranslateX + deltaX;
+                    if (newTranslateX < -100) newTranslateX = -100;
+                    if (newTranslateX > 0) newTranslateX = 0;
+                    checkboxWrapper.style.transform = `translateX(${newTranslateX}px)`;
                 }
-            }
-        });
+            });
 
-        sliderWrapper.addEventListener('touchend', () => {
-            if (isSwiping) {
-                const transform = checkboxWrapper.style.transform || '';
-                const match = transform.match(/translateX\(([-0-9.]+)px\)/);
-                const translateX = match ? parseFloat(match[1]) : 0;
-
-                checkboxWrapper.style.transition = 'transform 0.3s ease-out';
-                if (translateX <= -40) { // 如果滑動超過 40px，則自動滑開
-                    checkboxWrapper.style.transform = 'translateX(-100px)';
-                    deleteArea.style.right = '0';
-                } else { // 否則，滑回去
-                    checkboxWrapper.style.transform = 'translateX(0)';
-                    deleteArea.style.right = '-100px';
-                    // 動畫結束後再隱藏，避免閃爍
-                    setTimeout(() => {
-                        // 再次檢查確保使用者沒有在動畫期間再次滑動
-                        if (checkboxWrapper.style.transform === 'translateX(0px)') {
-                           deleteArea.style.display = 'none';
-                        }
-                    }, 300);
+            sliderWrapper.addEventListener('touchend', () => {
+                if (isSwiping) {
+                    const transform = checkboxWrapper.style.transform || '';
+                    const match = transform.match(/translateX\(([-0-9.]+)px\)/);
+                    const finalTranslateX = match ? parseFloat(match[1]) : 0;
+                    checkboxWrapper.style.transition = 'transform 0.3s ease-out';
+                    if (finalTranslateX < -40) {
+                        checkboxWrapper.style.transform = 'translateX(-100px)';
+                    } else {
+                        checkboxWrapper.style.transform = 'translateX(0)';
+                    }
                 }
-            }
-        });
+            });
+        }
+        
+        deleteBtn.addEventListener('click', () => deletePerson(caregiver, person.name));
+        return sliderWrapper;
     }
 
-    deleteBtn.addEventListener('click', () => deletePerson(caregiver, person.name));
-    return sliderWrapper;
-}
-
-function deletePerson(caregiver, name) {
-    if (confirm(`Are you sure you want to delete the record for ${name}?`)) {
-        const hall = getHallFromTitle();
-        fetch('/deleteData', {
+    /**
+     * 刪除名單
+     */
+    function deletePerson(caregiver, name) {
+        if (confirm(`確定要刪除 ${name} 的資料嗎？`)) {
+            const hall = getHallFromURL();
+            fetch('/deleteData', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hall, caregiver, name }),
-                credentials: 'include' // <-- 加上 credentials
+                credentials: 'include'
             })
             .then(response => response.json())
             .then(data => {
                 if (data.message === 'Data deleted successfully') {
-                    showToast(`Record for ${name} has been deleted`, 'success');
+                    showToast(`${name} 的資料已刪除`, 'success');
                     fetchDataAndUpdateCheckboxes(document.getElementById('date-range').value, hall);
                 } else {
-                    showToast('Delete failed, please try again', 'danger');
+                    showToast('刪除失敗', 'danger');
                 }
             })
             .catch(error => {
                 console.error('Error deleting data:', error);
-                showToast('Delete failed, please try again', 'danger');
+                showToast('刪除失敗，請檢查網路連線', 'danger');
             });
-    }
-}
-
-// ★ 核心修正 2 ★: 更新 submitGroupChanges 函式
-async function submitGroupChanges(caregiver, button) {
-    const updatedData = { [caregiver]: collectGroupData(caregiver) };
-    const selectedDate = document.getElementById('date-range').value;
-    const hall = getHallFromTitle();
-
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 提交中...';
-
-    try {
-        const response = await fetch('/updateData', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ updatedData, hall, selectedDate, nameToRowIndexMap }),
-            credentials: 'include'
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || '提交失敗');
-
-        showToast(`${caregiver} 的修改提交成功`, 'success');
-        
-        // 重新獲取最新資料
-        const newDataResponse = await fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' });
-        const newData = await newDataResponse.json();
-        
-        // 更新全域資料
-        formData = newData.groupedData;
-        nameToRowIndexMap = newData.nameToRowIndexMap;
-        
-        // 保持並重新應用搜尋篩選
-        const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
-        filterCaregiverData(searchTerm);
-
-    } catch (error) {
-        console.error('提交失敗:', error);
-        showToast(`${caregiver} 的修改提交失敗`, 'danger');
-    } finally {
-        button.disabled = false;
-        button.innerHTML = '<span>✔</span> 提交';
-    }
-}
-
-function collectGroupData(caregiver) {
-    return formData[caregiver].map(person => ({
-        name: person.name,
-        selectedOptions: options.filter(option => document.getElementById(`${caregiver}-${person.name}-${option}`).checked)
-    }));
-}
-
-
-// Filter caregiver data based on search input
-function filterCaregiverData(searchTerm) {
-    const checkboxContainer = document.querySelector('#checkbox-container');
-    checkboxContainer.innerHTML = '';
-    let matchCount = 0;
-
-    // 如果搜尋詞為空，則直接渲染全部資料
-    if (!searchTerm) {
-        renderCaregiverData(formData, options);
-        return;
-    }
-
-    for (let caregiver in formData) {
-        const caregiverData = formData[caregiver];
-        const caregiverNameMatch = caregiver.toLowerCase().includes(searchTerm);
-        
-        // 過濾出姓名匹配的使用者
-        const personMatches = caregiverData.filter(person => 
-            person.name.toLowerCase().includes(searchTerm)
-        );
-
-        // 如果照顧者姓名匹配，或組內有任何姓名匹配，則顯示整個群組
-        if (caregiverNameMatch || personMatches.length > 0) {
-            matchCount++;
-            const caregiverDiv = document.createElement('div');
-            caregiverDiv.classList.add('caregiver-group');
-            // 如果是照顧者姓名匹配，高亮照顧者
-            const caregiverHTML = caregiverNameMatch 
-                ? caregiver.replace(new RegExp(searchTerm, 'gi'), match => `<span class="search-highlight">${match}</span>`)
-                : caregiver;
-            caregiverDiv.innerHTML = `<h3>${caregiverHTML}：</h3>`;
-
-            caregiverData.forEach(person => {
-                const checkboxWrapper = createCheckboxWrapper(caregiver, person, options);
-                // 如果是姓名匹配，為該項目加上高亮
-                if (person.name.toLowerCase().includes(searchTerm)) {
-                    checkboxWrapper.querySelector('h4').innerHTML = person.name.replace(new RegExp(searchTerm, 'gi'), match => `<span class="search-highlight">${match}</span>`);
-                }
-                caregiverDiv.appendChild(checkboxWrapper);
-            });
-
-            const submitButton = document.createElement('button');
-            submitButton.classList.add('btn', 'submit-group-btn');
-            submitButton.innerHTML = '<span>✔</span> 提交';
-            submitButton.addEventListener('click', (event) => submitGroupChanges(caregiver, event.target));
-            caregiverDiv.appendChild(submitButton);
-
-            checkboxContainer.appendChild(caregiverDiv);
         }
     }
-    const resultInfo = document.createElement('p');
-    resultInfo.textContent = `找到 ${matchCount} 個匹配的群組`;
-    resultInfo.style.color = '#6c757d';
-    checkboxContainer.insertBefore(resultInfo, checkboxContainer.firstChild);
-}
 
-// Show a toast notification
-function showToast(message, type) {
-    const toastBody = toastEl.querySelector('.toast-body');
-    toastBody.textContent = message;
-    toastEl.className = 'toast'; // Reset classes
-    toastEl.classList.add(`text-bg-${type}`);
-    toast.show();
-}
+    /**
+     * 提交本組修改
+     */
+    async function submitGroupChanges(caregiver, button) {
+        const updatedData = { [caregiver]: collectGroupData(caregiver) };
+        const selectedDate = document.getElementById('date-range').value;
+        const hall = getHallFromURL();
 
-// Fetch and render statistics
-function fetchStats(selectedDate, hall) {
-    fetch(`/getStats?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' }) // <-- 加上 credentials
-    .then(response => {
-        if (!response.ok) { throw new Error('未授權或發生錯誤'); }
-        return response.json();
-    })
-        .then(data => {
-            renderStats(data);
-            document.getElementById('stats-container').style.display = 'block';
-            document.getElementById('checkbox-container').style.display = 'none';
-            document.getElementById('current-date').textContent = formatDateRange(selectedDate);
-        })
-        .catch(err => {
-            console.error('Error fetching stats:', err);
-            showToast('Error fetching stats, please try again', 'danger');
-        });
-}
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 提交中...';
 
-// Render the statistics table
-function renderStats(stats) {
-    const statsBody = document.getElementById('stats-body');
-    statsBody.innerHTML = '';
-    for (const category in stats) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${category}</td><td>${stats[category]}</td>`;
-        statsBody.appendChild(row);
+        try {
+            const response = await fetch('/updateData', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updatedData, hall, selectedDate, nameToRowIndexMap }),
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || '提交失敗');
+
+            showToast(`${caregiver} 的修改已提交`, 'success');
+            fetchDataAndUpdateCheckboxes(selectedDate, hall, caregiver);
+        } catch (error) {
+            console.error('提交失敗:', error);
+            showToast(`${caregiver} 的修改提交失敗`, 'danger');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = '<span>✔</span> 提交修改';
+        }
     }
-}
+    
+    /**
+     * 收集本組資料
+     */
+    function collectGroupData(caregiver) {
+        return formData[caregiver].map(person => ({
+            name: person.name,
+            selectedOptions: options.filter(option => {
+                const id = `${caregiver}-${person.name}-${option}`.replace(/\s/g, '-');
+                const checkbox = document.getElementById(id);
+                return checkbox ? checkbox.checked : false;
+            })
+        }));
+    }
 
-// Hide the sub-buttons of the floating action button
-function hideSubButtons() {
-    subButtons.style.display = 'none';
-    mainButton.style.display = 'flex';
-    isSubButtonsVisible = false;
-}
+    /**
+     * 根據搜尋詞過濾名單
+     */
+    function filterCaregiverData(searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        if (!lowerCaseSearchTerm) {
+            renderCaregiverData(formData);
+            return;
+        }
+        const filteredData = {};
+        for (let caregiver in formData) {
+            const caregiverMatch = caregiver.toLowerCase().includes(lowerCaseSearchTerm);
+            const personMatches = formData[caregiver].filter(person =>
+                person.name.toLowerCase().includes(lowerCaseSearchTerm)
+            );
+            if (caregiverMatch || personMatches.length > 0) {
+                filteredData[caregiver] = caregiverMatch ? formData[caregiver] : personMatches;
+            }
+        }
+        renderCaregiverData(filteredData);
+    }
+    
+    /**
+     * 獲取統計數據
+     */
+    function fetchStats(selectedDate, hall) {
+        fetch(`/getStats?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' })
+            .then(response => {
+                if (!response.ok) { throw new Error('獲取統計資料失敗'); }
+                return response.json();
+            })
+            .then(data => {
+                renderStats(data);
+                document.getElementById('stats-container').style.display = 'block';
+                document.getElementById('checkbox-container').style.display = 'none';
+                document.getElementById('current-date').textContent = formatDateRange(selectedDate);
+            })
+            .catch(err => {
+                console.error('Error fetching stats:', err);
+                showToast('獲取統計資料失敗', 'danger');
+            });
+    }
 
-// Initialize the page
-function initializeHallPage() {
-    // Bind event listeners to static elements
-    mainButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isSubButtonsVisible = !isSubButtonsVisible;
-        subButtons.style.display = isSubButtonsVisible ? 'flex' : 'none';
-        mainButton.style.display = isSubButtonsVisible ? 'none' : 'flex';
-    });
+    /**
+     * 渲染統計表格
+     */
+    function renderStats(stats) {
+        const statsBody = document.getElementById('stats-body');
+        statsBody.innerHTML = '';
+        for (const category in stats) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${category}</td><td>${stats[category]}</td>`;
+            statsBody.appendChild(row);
+        }
+    }
+    
+    /**
+     * 隱藏浮動子按鈕
+     */
+    function hideSubButtons() {
+        if(subButtons) subButtons.style.display = 'none';
+        isSubButtonsVisible = false;
+    }
 
-    document.getElementById('add-entry-button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const modal = new bootstrap.Modal(document.getElementById('addEntryModal'));
-        document.getElementById('addEntryForm').reset();
-        document.getElementById('hall').value = getHallFromTitle();
-        modal.show();
-        hideSubButtons();
-    });
+    // --- 初始化與事件綁定 ---
 
-    document.getElementById('stats-button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const selectedDate = document.getElementById('date-range').value;
-        const hall = getHallFromTitle();
-        fetchStats(selectedDate, hall);
-        hideSubButtons();
-    });
+    function initializeHallPage() {
+        const currentHall = getHallFromURL();
+        updatePageContent(currentHall);
+        loadNavbar();
 
-    document.getElementById('back-to-list').addEventListener('click', () => {
-        const selectedDate = document.getElementById('date-range').value;
-        const hall = getHallFromTitle();
-        fetchDataAndUpdateCheckboxes(selectedDate, hall);
-        document.getElementById('stats-container').style.display = 'none';
-        document.getElementById('checkbox-container').style.display = 'block';
-    });
+        mainButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isSubButtonsVisible = !isSubButtonsVisible;
+            if(subButtons) subButtons.style.display = isSubButtonsVisible ? 'flex' : 'none';
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (isSubButtonsVisible && !subButtons.contains(e.target)) {
+                hideSubButtons();
+            }
+        });
 
-    document.addEventListener('click', (e) => {
-        if (isSubButtonsVisible && !subButtons.contains(e.target) && e.target !== mainButton) {
+        document.getElementById('add-entry-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const modal = new bootstrap.Modal(document.getElementById('addEntryModal'));
+            document.getElementById('addEntryForm').reset();
+            const hallSelect = document.getElementById('hall');
+            const currentHallValue = getHallFromURL();
+            hallSelect.value = currentHallValue;
+            updateRegionOptions(currentHallValue);
+            modal.show();
             hideSubButtons();
-        }
-    });
-    
-    document.getElementById('addEntryForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const newEntryData = {
-        hall: document.getElementById('hall').value,
-        caregiver: document.getElementById('caregiver').value,
-        name: document.getElementById('name').value,
-        region: document.getElementById('region').value,
-        identity: document.getElementById('identity').value,
-        department: document.getElementById('department').value
-      };
-      lastFormData = { ...newEntryData };
-
-      fetch('/addNewData', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEntryData),
-        credentials: 'include' // <-- 加上 credentials
-    
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message === 'Data added successfully') {
-            showToast('New entry added successfully', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('addEntryModal')).hide();
-            fetchDataAndUpdateCheckboxes(document.getElementById('date-range').value, getHallFromTitle());
-        } else {
-            throw new Error(data.message || 'Failed to add new entry');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        showToast('Failed to add entry, please try again', 'danger');
-      });
-    });
-
-    document.getElementById('copy-last').addEventListener('click', function() {
-        if (lastFormData) {
-            document.getElementById('hall').value = lastFormData.hall;
-            document.getElementById('caregiver').value = lastFormData.caregiver;
-            document.getElementById('region').value = lastFormData.region;
-            document.getElementById('identity').value = lastFormData.identity;
-            // ★ UPDATE ★: Do not copy the name and department for better UX.
-            document.getElementById('name').value = '';
-            document.getElementById('department').value = '';
-        }
-    });
-
-    document.getElementById('addEntryModal').addEventListener('shown.bs.modal', () => {
-        const hallSelect = document.getElementById('hall');
-        const currentHall = getHallFromTitle();
-        hallSelect.value = currentHall;
-        updateRegionOptions(currentHall);
-        hallSelect.addEventListener('change', (e) => {
-            updateRegionOptions(e.target.value);
         });
-    });
 
-    // Initial load
-    loadNavbar();
-}
+        document.getElementById('stats-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const selectedDate = document.getElementById('date-range').value;
+            const hall = getHallFromURL();
+            fetchStats(selectedDate, hall);
+            hideSubButtons();
+        });
 
-// Run initialization once the DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeHallPage);
+        document.getElementById('back-to-list').addEventListener('click', () => {
+            document.getElementById('stats-container').style.display = 'none';
+            document.getElementById('checkbox-container').style.display = 'block';
+        });
+
+        document.getElementById('addEntryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newEntryData = {
+                hall: document.getElementById('hall').value,
+                caregiver: document.getElementById('caregiver').value,
+                name: document.getElementById('name').value,
+                region: document.getElementById('region').value,
+                identity: document.getElementById('identity').value,
+                department: document.getElementById('department').value
+            };
+            lastFormData = { ...newEntryData };
+
+            fetch('/addNewData', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newEntryData),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Data added successfully') {
+                    showToast('新增名單成功', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addEntryModal')).hide();
+                    fetchDataAndUpdateCheckboxes(document.getElementById('date-range').value, getHallFromURL());
+                } else {
+                    throw new Error(data.message || '新增失敗');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast(`新增失敗: ${error.message}`, 'danger');
+            });
+        });
+
+        document.getElementById('copy-last').addEventListener('click', function() {
+            if (lastFormData) {
+                document.getElementById('hall').value = lastFormData.hall;
+                document.getElementById('caregiver').value = lastFormData.caregiver;
+                document.getElementById('region').value = lastFormData.region;
+                document.getElementById('identity').value = lastFormData.identity;
+                document.getElementById('name').value = '';
+                document.getElementById('department').value = '';
+            }
+        });
+        
+        const addEntryModal = document.getElementById('addEntryModal');
+        if(addEntryModal){
+            addEntryModal.addEventListener('shown.bs.modal', () => {
+                const hallSelect = document.getElementById('hall');
+                hallSelect.addEventListener('change', (e) => {
+                    updateRegionOptions(e.target.value);
+                });
+            });
+        }
+    }
+    
+    // 執行初始化
+    initializeHallPage();
+});

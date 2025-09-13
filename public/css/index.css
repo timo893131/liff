@@ -1,91 +1,73 @@
-/* public/css/index.css (最終優化版 - 修正手機導覽列) */
+/* public/css/index.css (最終完美優化版) */
 
-/* --- 全局樣式 --- */
+/*
+  備註：此檔案繼承了 main.css 中定義的 :root 變數。
+  此處的樣式將覆蓋或擴充 main.css，為首頁和 0329 頁面提供獨特外觀。
+*/
+
+/* --- 1. 全局樣式覆蓋 --- */
 body {
-  font-family: 'Noto Sans TC', Arial, sans-serif;
-  background: linear-gradient(135deg, #f4faff 0%, #e6f0fa 100%);
-  color: #2c3e50;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background: linear-gradient(135deg, var(--c-primary-light) 0%, #e6f0fa 100%);
+  padding-top: 80px; /* 確保與 main.css 一致 */
 }
 
-/* --- 導航欄樣式 (覆蓋) --- */
-/* 為了讓 index.html 和 0329.html 有獨特的導覽列外觀 */
-.navbar {
-  background: #3498db;
-  padding: 15px 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-}
-.navbar a {
-  color: white;
-  font-size: 18px;
-  padding: 10px 15px;
-  transition: all 0.3s ease;
-}
-.navbar-nav .nav-link:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 5px;
-}
-.navbar-toggler {
-  border-color: white;
-}
 
-/* --- 主容器樣式 --- */
+
+
+/* --- 3. 頁面主要容器 --- */
 .content-container {
-  background: #ffffff;
-  padding: 40px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  background: var(--c-surface);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 1000px;
   margin: 30px auto;
   transition: transform 0.3s ease;
   text-align: center;
+  border: 1px solid var(--c-border);
 }
 .content-container:hover {
   transform: translateY(-5px);
 }
 
-/* --- 標題樣式 --- */
+/* --- 4. 標題樣式 --- */
 .main-title {
-  color: #2c3e50;
+  color: var(--c-text-primary);
   font-size: 36px;
   margin-top: 30px;
   margin-bottom: 30px;
   font-weight: 700;
   letter-spacing: 2px;
-  background: linear-gradient(90deg, #3498db, #e67e22);
+  background: linear-gradient(90deg, var(--c-primary), var(--c-primary-orange, #e67e22));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* --- 倒數計時樣式 --- */
-.countdown-container {
+/* --- 5. 倒數計時 & 內容區塊 --- */
+.countdown-container,
+.target-container {
   margin: 0 0 30px;
   padding: 25px;
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  background: var(--c-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--c-border);
   transition: all 0.3s ease;
 }
 .countdown-container.urgent {
-  background: #ffe6e6;
+  background: #fff0f0;
   box-shadow: 0 6px 20px rgba(214, 48, 49, 0.2);
   animation: pulse-bg 1.5s infinite;
 }
 .countdown-container h2 {
   font-size: 28px;
-  color: #e67e22;
+  color: var(--c-primary-orange, #e67e22);
   margin-bottom: 20px;
   font-weight: 600;
 }
 .countdown-container.urgent h2 {
-  color: #d63031;
+  color: var(--c-danger);
 }
 .wave-text {
   display: inline-flex;
@@ -104,20 +86,20 @@ body {
   flex-wrap: wrap;
 }
 .countdown-item {
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-dark));
   color: white;
   padding: 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   min-width: 90px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 .countdown-container.urgent .countdown-item {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: linear-gradient(135deg, var(--c-danger), #c0392b);
 }
 .countdown-item:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 .countdown-item span {
   display: block;
@@ -134,72 +116,61 @@ body {
 }
 .urgent-text {
   display: none;
-  color: #d63031;
+  color: var(--c-danger);
   font-size: 16px;
   margin-top: 15px;
   font-weight: 500;
 }
 
-/* --- 目標人數 & 報名按鈕 --- */
-.target-container {
-  margin: 0 0 30px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-}
-.target-container p { font-size: 20px; color: #2c3e50; margin: 0; }
-.target-container strong { color: #28a745; font-weight: 700; }
-.target-container .highlight { font-weight: 700; color: #e67e22; font-size: 24px; }
+/* --- 6. 按鈕 --- */
+.target-container p { font-size: 20px; color: var(--c-text-primary); margin: 0; }
+.target-container strong { color: var(--c-success); font-weight: 700; }
+.target-container .highlight { font-weight: 700; color: var(--c-primary-orange, #e67e22); font-size: 24px; }
 .signup-container { margin: 0 0 30px; }
-.btn-signup {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
+
+.btn-signup, .btn-view-list {
   color: white;
   padding: 15px 40px;
   border-radius: 50px;
   font-size: 18px;
   font-weight: 600;
   transition: all 0.3s ease;
+  border: none;
+}
+.btn-signup {
+  background: linear-gradient(135deg, var(--c-success), #27ae60);
   box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
 }
-.btn-signup:hover { transform: scale(1.05); }
 .btn-view-list {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  padding: 15px 40px;
-  border-radius: 50px;
-  font-size: 18px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-dark));
   box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
   margin-left: 15px;
 }
-.btn-view-list:hover { transform: scale(1.05); }
+.btn-signup:hover, .btn-view-list:hover {
+  transform: translateY(-3px) scale(1.05);
+}
 
-/* --- 圖片 --- */
+/* --- 7. 圖片 --- */
 .image-container { margin: 0 auto; max-width: 800px; }
 .img-fluid {
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   width: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 .img-fluid:hover { transform: scale(1.02); }
 
-/* --- 動畫 --- */
+/* --- 8. 動畫 --- */
 @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes pulse-bg { 0% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(214, 48, 49, 0); } 100% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0); } }
 @keyframes tick { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-
-/* --- ★★★ 響應式設計 (包含導覽列修正) ★★★ --- */
+/* --- 9. 響應式設計 (RWD) --- */
 @media (max-width: 991px) {
-  /* 強制導覽列頂部元素不換行，確保標題和漢堡按鈕在同一行 */
   .navbar > .container-fluid {
     flex-wrap: nowrap;
   }
-  /* 讓漢堡選單的內容（包括日期/搜尋框）正常顯示 */
   #navbarNav {
       width: 100%;
   }
