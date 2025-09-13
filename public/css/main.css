@@ -84,9 +84,7 @@ body {
 .navbar-nav .nav-link:focus {
   color: var(--c-primary) !important;
 }
-#date-range-container {
-  margin-left: var(--space-5);
-}
+
 /* 頁面標題區塊 */
 .header-section {
   background: linear-gradient(90deg, var(--c-primary), var(--c-primary-dark));
@@ -297,7 +295,7 @@ h4 {
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    margin-left: var(--space-3); /* 手機版使用較小的間距 */
+    
   }
   #date-range-container .form-select {
     width: 90px; /* 給予日期足夠寬度 */
