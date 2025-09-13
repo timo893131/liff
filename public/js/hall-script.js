@@ -335,34 +335,46 @@ function deletePerson(caregiver, name) {
     }
 }
 
-function submitGroupChanges(caregiver, button) {
+// ★ 核心修正 2 ★: 更新 submitGroupChanges 函式
+async function submitGroupChanges(caregiver, button) {
     const updatedData = { [caregiver]: collectGroupData(caregiver) };
     const selectedDate = document.getElementById('date-range').value;
     const hall = getHallFromTitle();
 
     button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 提交中...';
 
-    fetch('/updateData', {
+    try {
+        const response = await fetch('/updateData', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ updatedData, hall, selectedDate, nameToRowIndexMap }),
-            credentials: 'include' // <-- 加上 credentials
-
-        })
-        .then(response => response.json())
-        .then(data => {
-            showToast(`${caregiver}'s changes submitted successfully`, 'success');
-            fetchDataAndUpdateCheckboxes(selectedDate, hall, caregiver);
-        })
-        .catch(error => {
-            console.error('Submit failed:', error);
-            showToast(`${caregiver}'s changes failed to submit`, 'danger');
-        })
-        .finally(() => {
-            button.disabled = false;
-            button.innerHTML = '<span>✔</span> Submit';
+            credentials: 'include'
         });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || '提交失敗');
+
+        showToast(`${caregiver} 的修改提交成功`, 'success');
+        
+        // 重新獲取最新資料
+        const newDataResponse = await fetch(`/getData?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' });
+        const newData = await newDataResponse.json();
+        
+        // 更新全域資料
+        formData = newData.groupedData;
+        nameToRowIndexMap = newData.nameToRowIndexMap;
+        
+        // 保持並重新應用搜尋篩選
+        const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+        filterCaregiverData(searchTerm);
+
+    } catch (error) {
+        console.error('提交失敗:', error);
+        showToast(`${caregiver} 的修改提交失敗`, 'danger');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = '<span>✔</span> 提交';
+    }
 }
 
 function collectGroupData(caregiver) {
@@ -378,25 +390,53 @@ function filterCaregiverData(searchTerm) {
     const checkboxContainer = document.querySelector('#checkbox-container');
     checkboxContainer.innerHTML = '';
     let matchCount = 0;
+
+    // 如果搜尋詞為空，則直接渲染全部資料
+    if (!searchTerm) {
+        renderCaregiverData(formData, options);
+        return;
+    }
+
     for (let caregiver in formData) {
-        if (caregiver.toLowerCase().includes(searchTerm)) {
+        const caregiverData = formData[caregiver];
+        const caregiverNameMatch = caregiver.toLowerCase().includes(searchTerm);
+        
+        // 過濾出姓名匹配的使用者
+        const personMatches = caregiverData.filter(person => 
+            person.name.toLowerCase().includes(searchTerm)
+        );
+
+        // 如果照顧者姓名匹配，或組內有任何姓名匹配，則顯示整個群組
+        if (caregiverNameMatch || personMatches.length > 0) {
             matchCount++;
             const caregiverDiv = document.createElement('div');
             caregiverDiv.classList.add('caregiver-group');
-            caregiverDiv.innerHTML = `<h3>${caregiver.replace(new RegExp(searchTerm, 'gi'), match => `<span class="search-highlight">${match}</span>`)}:</h3>`;
-            formData[caregiver].forEach(person => {
-                caregiverDiv.appendChild(createCheckboxWrapper(caregiver, person, options));
+            // 如果是照顧者姓名匹配，高亮照顧者
+            const caregiverHTML = caregiverNameMatch 
+                ? caregiver.replace(new RegExp(searchTerm, 'gi'), match => `<span class="search-highlight">${match}</span>`)
+                : caregiver;
+            caregiverDiv.innerHTML = `<h3>${caregiverHTML}：</h3>`;
+
+            caregiverData.forEach(person => {
+                const checkboxWrapper = createCheckboxWrapper(caregiver, person, options);
+                // 如果是姓名匹配，為該項目加上高亮
+                if (person.name.toLowerCase().includes(searchTerm)) {
+                    checkboxWrapper.querySelector('h4').innerHTML = person.name.replace(new RegExp(searchTerm, 'gi'), match => `<span class="search-highlight">${match}</span>`);
+                }
+                caregiverDiv.appendChild(checkboxWrapper);
             });
+
             const submitButton = document.createElement('button');
             submitButton.classList.add('btn', 'submit-group-btn');
-            submitButton.innerHTML = '<span>✔</span> Submit';
+            submitButton.innerHTML = '<span>✔</span> 提交';
             submitButton.addEventListener('click', (event) => submitGroupChanges(caregiver, event.target));
             caregiverDiv.appendChild(submitButton);
+
             checkboxContainer.appendChild(caregiverDiv);
         }
     }
     const resultInfo = document.createElement('p');
-    resultInfo.textContent = searchTerm ? `Found ${matchCount} matches` : 'Showing all data';
+    resultInfo.textContent = `找到 ${matchCount} 個匹配的群組`;
     resultInfo.style.color = '#6c757d';
     checkboxContainer.insertBefore(resultInfo, checkboxContainer.firstChild);
 }

@@ -8,3 +8,4 @@ class WebsiteUser(HttpUser):  # 確保類名正確
         self.client.get("/getPrayerData?hall=hall-h3-new")
 
 # 無需額外包裹，類直接在頂級範圍
+

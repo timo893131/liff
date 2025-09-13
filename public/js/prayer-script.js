@@ -1,248 +1,176 @@
-// public/js/prayer-script.js
+// public/js/prayer-script.js (最終修正版)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- 全局變數 ---
-    let currentHall = 'hall-h3-new'; // 預設會所
-    let prayerData = {};
+    let currentGroup = 'h3-peace-brothers'; // 預設群組
+    let prayerItems = [];
 
     // --- DOM 元素 ---
-    const toastEl = document.getElementById('submit-toast');
+    const toastEl = document.getElementById('toast');
     const toast = new bootstrap.Toast(toastEl);
-    const mainButton = document.getElementById('main-floating-button');
-    const subButtons = document.getElementById('sub-buttons');
-    const prayerContainer = document.getElementById('prayer-container');
-    const currentHallSpan = document.getElementById('current-hall');
-    const prayerModal = new bootstrap.Modal(document.getElementById('prayerModal'));
-    const statsModal = new bootstrap.Modal(document.getElementById('statsModal'));
-
-    let isSubButtonsVisible = false;
-
-    // --- 會所名稱對照 ---
-    const hallNameMap = {
-        'hall-h3-new': 'H3（新生）',
-        'hall-h3-peace': 'H3（和平）',
-        'hall-h3-english': 'H3（英語）',
-        'hall-h62': 'H62',
-        'hall-h71': 'H71',
-        'hall-h82': 'H82',
-        'hall-h103': 'H103'
-    };
+    const groupSelect = document.getElementById('group-select');
+    const prayerList = document.getElementById('prayer-list');
+    const modalEl = document.getElementById('prayerModal');
+    const prayerModal = new bootstrap.Modal(modalEl);
+    const modalTitle = document.getElementById('prayerModalLabel');
+    const prayerForm = document.getElementById('prayerForm');
+    const nameInput = document.getElementById('prayer-name');
+    const itemInput = document.getElementById('prayer-item');
+    let currentEditId = null;
 
     // --- 核心函式 ---
-
-    // 顯示 Toast 提示
-    function showToast(message, type = 'info') {
-        const toastBody = toastEl.querySelector('.toast-body');
-        toastBody.textContent = message;
-        toastEl.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-warning', 'text-bg-info');
-        toastEl.classList.add(`text-bg-${type}`);
-        toast.show();
-    }
-
-    // 載入導航欄
+    
+    // 載入導航欄並設定
     function loadNavbar() {
         fetch('navbar.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('navbar-container').innerHTML = data;
-                // 在此頁面隱藏日期選單和搜尋框
-                const dateRangeContainer = document.getElementById('date-range-container');
+                
+                // 隱藏日期範圍和搜尋框，因為代禱牆頁面用不到
+                const dateRangeContainer = document.getElementById('date-range');
                 if (dateRangeContainer) dateRangeContainer.style.display = 'none';
+
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) searchInput.style.display = 'none';
+
+                // 檢查管理員身份以顯示「管理後台」連結
+                checkAdmin();
             })
             .catch(error => console.error('Error loading navbar:', error));
     }
 
-    // 選擇並載入會所資料
-    function selectHall(hallId) {
-        currentHall = hallId;
-        currentHallSpan.textContent = hallNameMap[hallId] || '未知會所';
-        // 更新按鈕的選中狀態
-        document.querySelectorAll('.hall-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.getElementById(hallId).classList.add('active');
-
-        fetchPrayerData();
+    // 檢查管理員權限
+    function checkAdmin() {
+        fetch('/api/user', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.loggedIn && data.user.role === 'admin') {
+                    const adminLink = document.getElementById('admin-link');
+                    if (adminLink) adminLink.style.display = 'block';
+                }
+            });
     }
 
-    // 獲取代禱數據
-    async function fetchPrayerData() {
-        try {
-            const response = await fetch(`/getPrayerData?hall=${currentHall}`);
-            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
-            prayerData = await response.json();
-            renderPrayerData();
-        } catch (err) {
-            console.error('獲取代禱數據時出錯:', err);
-            prayerContainer.innerHTML = '<div class="alert alert-danger">無法載入資料，請稍後再試。</div>';
-            showToast('獲取數據時出錯，請稍後再試', 'danger');
-        }
-    }
-    
-    // 獲取統計數據
-    async function fetchPrayerStats() {
-        try {
-            const response = await fetch(`/getPrayerStats?hall=${currentHall}`);
-            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
-            const stats = await response.json();
-            renderModalStats(stats);
-            statsModal.show();
-        } catch (err) {
-            console.error('獲取統計數據時出錯:', err);
-            showToast('獲取統計數據時出錯，請稍後再試', 'danger');
-        }
+    // 顯示 Toast 提示
+    function showToast(message, type = 'info') {
+        toastEl.querySelector('.toast-body').textContent = message;
+        toastEl.className = 'toast';
+        toastEl.classList.add(`text-bg-${type}`);
+        toast.show();
     }
 
     // 渲染代禱事項列表
-    function renderPrayerData() {
-        prayerContainer.innerHTML = '';
-        if (Object.keys(prayerData).length === 0) {
-            prayerContainer.innerHTML = '<div class="alert alert-info">目前沒有代禱事項。</div>';
+    function renderPrayerItems() {
+        prayerList.innerHTML = '';
+        if (prayerItems.length === 0) {
+            prayerList.innerHTML = '<div class="col-12"><div class="alert alert-light">這個群組目前沒有代禱事項。</div></div>';
             return;
         }
+        prayerItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-lg-4 mb-4';
+            card.innerHTML = `
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">${item.name}</h5>
+                        <p class="card-text flex-grow-1">${item.item.replace(/\n/g, '<br>')}</p>
+                        <div class="mt-auto text-end">
+                            <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${item.id}">編輯</button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}">刪除</button>
+                        </div>
+                    </div>
+                </div>`;
+            prayerList.appendChild(card);
+        });
+    }
 
-        for (let id in prayerData) {
-            const prayer = prayerData[id];
-            const prayerDiv = document.createElement('div');
-            prayerDiv.classList.add('prayer-item');
-            prayerDiv.innerHTML = `
-              <div class="d-flex justify-content-between align-items-center">
-                <span>${prayer.content}</span>
-                <div class="d-flex align-items-center">
-                    <select class="form-select status-select me-2" data-id="${id}" style="width: auto;">
-                        <option value="#️⃣" ${prayer.status === '#️⃣' ? 'selected' : ''}>#️⃣</option>
-                        <option value="✅" ${prayer.status === '✅' ? 'selected' : ''}>✅</option>
-                        <option value="❌" ${prayer.status === '❌' ? 'selected' : ''}>❌</option>
-                        <option value="❓" ${prayer.status === '❓' ? 'selected' : ''}>❓</option>
-                    </select>
-                    <button class="btn btn-sm btn-outline-danger delete-prayer" data-id="${id}">×</button>
-                </div>
-              </div>
-            `;
-            prayerContainer.appendChild(prayerDiv);
+    // 獲取 API 資料
+    async function fetchPrayerItems() {
+        try {
+            const response = await fetch(`/api/prayer-items?group=${currentGroup}`, { credentials: 'include' });
+            if (!response.ok) {
+                if(response.status === 401) window.location.href = '/login.html';
+                throw new Error('無法載入資料');
+            }
+            prayerItems = await response.json();
+            renderPrayerItems();
+        } catch (err) {
+            console.error(err);
+            showToast(err.message, 'danger');
         }
     }
-
-    // 渲染統計數據 Modal
-    function renderModalStats(stats) {
-        const statsModalBody = document.getElementById('stats-modal-body');
-        statsModalBody.innerHTML = '';
-        const order = ['✅', '❌', '❓', '#️⃣'];
-        order.forEach(status => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${status}</td><td>${stats[status] || 0}</td>`;
-            statsModalBody.appendChild(row);
-        });
-        const totalRow = document.createElement('tr');
-        totalRow.innerHTML = `<td><strong>總數</strong></td><td><strong>${stats.total || 0}</strong></td>`;
-        statsModalBody.appendChild(totalRow);
-    }
     
-    // 隱藏次級按鈕
-    function hideSubButtons() {
-        subButtons.style.display = 'none';
-        mainButton.style.display = 'flex';
-        isSubButtonsVisible = false;
+    // 統一處理 API 請求
+    async function handleApiRequest(url, options, successMessage) {
+        options.credentials = 'include';
+        try {
+            const response = await fetch(url, options);
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || '操作失敗');
+            showToast(successMessage, 'success');
+            prayerModal.hide();
+            fetchPrayerItems(); // 成功後刷新
+        } catch (err) {
+            showToast(err.message, 'danger');
+        }
     }
 
     // --- 事件處理 ---
-
-    // 處理 API 請求
-    async function handleApiRequest(url, options, successMessage) {
-        try {
-            const response = await fetch(url, options);
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || `伺服器錯誤: ${response.status}`);
-            }
-            showToast(successMessage, 'success');
-            fetchPrayerData(); // 成功後刷新列表
-        } catch (error) {
-            console.error('API 請求失敗:', error);
-            showToast(error.message, 'danger');
-        }
-    }
-    
-    // 動態綁定事件 (使用事件委派)
-    prayerContainer.addEventListener('change', e => {
-        if (e.target.classList.contains('status-select')) {
-            const id = e.target.dataset.id;
-            const status = e.target.value;
-            handleApiRequest('/updatePrayerStatus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status, hall: currentHall }),
-            }, '狀態更新成功');
-        }
+    groupSelect.addEventListener('change', () => {
+        currentGroup = groupSelect.value;
+        fetchPrayerItems();
     });
 
-    prayerContainer.addEventListener('click', e => {
-        if (e.target.classList.contains('delete-prayer')) {
-            if (confirm('確定要清除此代禱事項嗎？')) {
-                const id = e.target.dataset.id;
-                handleApiRequest('/deletePrayer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, hall: currentHall }),
-                }, '代禱事項清除成功');
+    document.getElementById('add-prayer-btn').addEventListener('click', () => {
+        currentEditId = null;
+        modalTitle.textContent = '新增代禱事項';
+        prayerForm.reset();
+        prayerModal.show();
+    });
+
+    prayerList.addEventListener('click', e => {
+        const target = e.target;
+        if (target.classList.contains('edit-btn')) {
+            const id = target.dataset.id;
+            const item = prayerItems.find(p => p.id == id);
+            if (item) {
+                currentEditId = id;
+                modalTitle.textContent = '編輯代禱事項';
+                nameInput.value = item.name;
+                itemInput.value = item.item;
+                prayerModal.show();
+            }
+        }
+        if (target.classList.contains('delete-btn')) {
+            const id = target.dataset.id;
+            if (confirm('確定要刪除這個代禱事項嗎？')) {
+                const body = JSON.stringify({ group: currentGroup });
+                handleApiRequest(
+                    `/api/prayer-items/${id}`, 
+                    { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body }, 
+                    '刪除成功'
+                );
             }
         }
     });
-    
-    // 新增代禱事項表單提交
-    document.getElementById('prayerForm').addEventListener('submit', function(e) {
+
+    prayerForm.addEventListener('submit', e => {
         e.preventDefault();
-        const content = document.getElementById('prayer-content').value;
-        const status = document.getElementById('prayer-status').value;
-        if (!content.trim()) {
-            showToast('姓名不能為空', 'warning');
+        const name = nameInput.value.trim();
+        const item = itemInput.value.trim();
+        if (!name || !item) {
+            showToast('姓名和代禱事項都不能為空', 'warning');
             return;
         }
-        handleApiRequest('/addPrayer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, status, hall: currentHall }),
-        }, '新增成功');
-        prayerModal.hide();
-        this.reset();
+        const url = currentEditId ? `/api/prayer-items/${currentEditId}` : '/api/prayer-items';
+        const method = currentEditId ? 'PUT' : 'POST';
+        const body = JSON.stringify({ name, item, group: currentGroup });
+        const successMessage = currentEditId ? '更新成功' : '新增成功';
+        handleApiRequest(url, { method, headers: { 'Content-Type': 'application/json' }, body }, successMessage);
     });
-
-    // --- 頁面初始化 ---
-
-    // 綁定會所按鈕事件
-    document.querySelectorAll('.hall-btn').forEach(button => {
-        button.addEventListener('click', () => selectHall(button.id));
-    });
-
-    // 綁定浮動按鈕事件
-    mainButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isSubButtonsVisible = !isSubButtonsVisible;
-        subButtons.style.display = isSubButtonsVisible ? 'flex' : 'none';
-        mainButton.style.display = isSubButtonsVisible ? 'none' : 'flex';
-    });
-
-    document.getElementById('sub-add-button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.getElementById('prayerForm').reset();
-        document.getElementById('prayer-status').value = '#️⃣'; // 預設為'尚未邀約'
-        prayerModal.show();
-        hideSubButtons();
-    });
-
-    document.getElementById('sub-stats-button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        fetchPrayerStats();
-        hideSubButtons();
-    });
-
-    document.addEventListener('click', (e) => {
-        if (isSubButtonsVisible && !subButtons.contains(e.target) && e.target !== mainButton) {
-            hideSubButtons();
-        }
-    });
-
-    // 初始載入
+    
+    // --- 初始化 ---
     loadNavbar();
-    selectHall(currentHall); // 載入預設會所的資料
+    fetchPrayerItems();
 });

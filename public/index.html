@@ -10,7 +10,7 @@
 </head>
 
 <body>
-  <div id="navbar-container"></div>
+  <div id="navbar-container" style="margin-top: 60px;" ></div>
   
   <div class="content-container">
     <h1 class="main-title">師大好牧人</h1>
@@ -57,7 +57,7 @@
                 document.getElementById('navbar-container').innerHTML = data;
                 
                 // 隱藏日期範圍選單
-                const dateRangeContainer = document.getElementById('date-range-container');
+                const dateRangeContainer = document.getElementById('date-range');
                 if (dateRangeContainer) {
                     dateRangeContainer.style.display = 'none';
                 }
