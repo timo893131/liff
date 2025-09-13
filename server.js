@@ -338,7 +338,7 @@ app.get('/getSignupList', async (req, res) => {
 });
 
 // --- 代禱牆 API (全新修正版) ---
-const PRAYER_SHEET_NAME = config.PRAYER_SHEET || '代禱牆';
+const PRAYER_SHEET_NAME = config.PRAYER_SHEET || '活力組代禱牆';
 
 // 獲取指定群組的代禱事項
 app.get('/api/prayer-items', isAuthenticated, validatePrayerHall, async (req, res) => {
