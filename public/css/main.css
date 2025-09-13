@@ -69,7 +69,7 @@ body {
 }
 .navbar-brand h3 {
   color: var(--c-primary);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 20px;
 }
 .navbar-toggler {
@@ -302,8 +302,8 @@ h4 {
     font-size: 9px;
   }
   #date-range-container .form-control {
-    width: 95px; /* 給予搜尋框足夠寬度 */
-    font-size: 10px;
+    width: 90px; /* 給予搜尋框足夠寬度 */
+    font-size: 9px;
   }
 }
 
