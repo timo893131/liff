@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const submitButton = document.createElement('button');
             submitButton.classList.add('btn', 'btn-info', 'btn-sm', 'mt-2', 'submit-group-btn');
-            submitButton.innerHTML = '<span>✔</span> 提交本組修改';
+            submitButton.innerHTML = '<span>✔</span> 提交修改';
             submitButton.addEventListener('click', (event) => submitGroupChanges(caregiver, event.target));
             caregiverDiv.appendChild(submitButton);
 
