@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hallRegionFilters = document.getElementById('hallRegionFilters');
     const prayerGroupFilter = document.getElementById('prayerGroupFilter');
     const hallSelect = document.getElementById('hallSelect');
-    const regionSelect = document.getElementById('regionSelect'); // 現在是 <ul> 元素
+    const regionSelect = document.getElementById('regionSelect'); // <ul> 元素
     const regionDropdown = document.getElementById('regionDropdown');
     const prayerGroupSelect = document.getElementById('prayerGroupSelect');
     const listContainer = document.getElementById('list-container');
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：移除 onclick，改用 addEventListener ★★★
+    // ★★★ 核心修正：重構此函式以實現點擊整行勾選 ★★★
     async function updateRegionOptions(hallId) {
         regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
@@ -49,27 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 regions.forEach(region => {
                     const li = document.createElement('li');
                     li.className = 'dropdown-item-checkbox';
+                    li.innerHTML = `
+                        <input class="form-check-input" type="checkbox" value="${region}" id="region-${region}">
+                        <label class="form-check-label flex-grow-1" for="region-${region}">${region}</label>
+                    `;
                     
-                    const input = document.createElement('input');
-                    input.className = 'form-check-input';
-                    input.type = 'checkbox';
-                    input.value = region;
-                    input.id = `region-${region}`;
-
-                    const label = document.createElement('label');
-                    label.className = 'form-check-label';
-                    label.setAttribute('for', `region-${region}`);
-                    label.textContent = region;
-
-                    // 將事件監聽器綁定到 li 元素上
-                    // 這樣點擊 li 範圍內的任何地方 (包括 input 和 label) 都會觸發
+                    // 1. 將事件監聽器綁定到 li 元素
                     li.addEventListener('click', (event) => {
-                        // 阻止事件冒泡，這樣下拉選單就不會關閉
+                        // 2. 阻止事件冒泡，保持下拉選單開啟
                         event.stopPropagation();
+                        
+                        const checkbox = li.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            // 3. 如果點擊的不是 checkbox 本身，就手動反轉其狀態
+                            if (event.target !== checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                            }
+                            // 4. 觸發列表刷新
+                            fetchAndRenderList();
+                        }
                     });
 
-                    li.appendChild(input);
-                    li.appendChild(label);
                     regionSelect.appendChild(li);
                 });
             }
@@ -87,13 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const hall = hallSelect.value;
             const selectedRegions = Array.from(regionSelect.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             
-            url += `&hall=${hall}`;
-            
             let titleRegionText = '-- 所有小區 --';
+            
             if (selectedRegions.length > 0) {
+                // 如果有選擇小區，設定 type=region 和 regions 參數
                 url = `/api/view-list?type=region&hall=${hall}&regions=${selectedRegions.join(',')}`;
                 titleRegionText = selectedRegions.length > 2 ? `已選 ${selectedRegions.length} 個小區` : selectedRegions.join(', ');
+            } else {
+                // 如果沒有選擇小區，則請求整個會所
+                url = `/api/view-list?type=hall&hall=${hall}`;
             }
+
             regionDropdown.textContent = titleRegionText;
             listTitle.textContent = `${hallSelect.options[hallSelect.selectedIndex].text} / ${titleRegionText}`;
 
@@ -158,11 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderList();
     });
 
-    regionSelect.addEventListener('click', (e) => {
-        if (e.target.matches('input[type="checkbox"]')) {
-            fetchAndRenderList();
-        }
-    });
+    // 移除舊的 regionSelect 監聽器，因為邏輯已移至 li 元素上
 
     prayerGroupSelect.addEventListener('change', fetchAndRenderList);
 
