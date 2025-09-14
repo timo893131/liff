@@ -129,29 +129,47 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * 載入導覽列並綁定事件
      */
+        // ★★★ 核心修正 1：調整滑動靈敏度 ★★★
+    function createCheckboxWrapper(caregiver, person) {
+        // ... (大部分函式內容不變) ...
+        
+        if (window.innerWidth <= 768) {
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            sliderWrapper.addEventListener('touchstart', (e) => {
+                touchStartX = e.targetTouches[0].clientX;
+            }, { passive: true });
+
+            sliderWrapper.addEventListener('touchmove', (e) => {
+                touchEndX = e.targetTouches[0].clientX;
+            }, { passive: true });
+
+            sliderWrapper.addEventListener('touchend', () => {
+                const deltaX = touchStartX - touchEndX;
+                // 將觸發滑動的距離從 50px 增加到 80px，降低靈敏度
+                if (deltaX > 80) { 
+                    sliderWrapper.classList.add('is-open');
+                }
+                if (deltaX < -80) {
+                    sliderWrapper.classList.remove('is-open');
+                }
+            });
+        }
+        
+        // ... (其餘函式內容不變) ...
+        return sliderWrapper;
+    }
+    
+    // ★★★ 核心修正 2：簡化 loadNavbar 並移動篩選器初始化邏輯 ★★★
     function loadNavbar() {
         fetch('navbar.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('navbar-container').innerHTML = data;
-                document.getElementById('date-range').addEventListener('change', function() {
-                    if (this.value) {
-                        const hall = getHallFromURL();
-                        const isStatsVisible = document.getElementById('stats-container').style.display === 'block';
-                        if (isStatsVisible) {
-                            fetchStats(this.value, hall);
-                        } else {
-                            fetchDataAndUpdateCheckboxes(this.value, hall);
-                        }
-                    }
-                });
-                document.getElementById('search-input').addEventListener('input', function() {
-                    filterCaregiverData(this.value.trim().toLowerCase());
-                });
-                fetchAndSetDateRanges();
-                checkAdmin();
-            })
-            .catch(error => console.error('Error loading navbar:', error));
+                // 檢查管理員權限的邏輯依然保留
+                checkAdmin(); 
+            });
     }
 
     /**
@@ -318,11 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
             sliderWrapper.addEventListener('touchend', () => {
                 const deltaX = touchStartX - touchEndX;
                 // 向左滑動超過50px，且不是從右向左滑回來
-                if (deltaX > 50 && !sliderWrapper.classList.contains('is-open')) {
+                if (deltaX > 80 && !sliderWrapper.classList.contains('is-open')) {
                     sliderWrapper.classList.add('is-open');
                 }
                 // 向右滑動超過50px
-                if (deltaX < -50) {
+                if (deltaX < -80) {
                     sliderWrapper.classList.remove('is-open');
                 }
             });

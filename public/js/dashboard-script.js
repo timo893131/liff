@@ -34,56 +34,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：新增「所有小區」選項與邏輯 ★★★
+    // ★★★ 核心修正：重構事件綁定，解決點擊閃爍問題 ★★★
     async function updateRegionOptions(hallId) {
         regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
             const response = await fetch(`/getRegions?hall=${hallId}`);
             if (!response.ok) throw new Error("Failed to fetch regions");
             const regions = await response.json();
-            regionSelect.innerHTML = ''; // 清空
+            regionSelect.innerHTML = '';
 
-            // 1. 新增「所有小區」選項
             const allRegionsLi = document.createElement('li');
             allRegionsLi.innerHTML = '<a class="dropdown-item fw-bold" href="#">-- 所有小區 --</a>';
             allRegionsLi.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                // 取消所有其他勾選
                 regionSelect.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                // 立即刷新列表
                 fetchAndRenderList();
             });
             regionSelect.appendChild(allRegionsLi);
             
-            // 新增分隔線
             if (regions.length > 0) {
                 regionSelect.appendChild(document.createElement('hr'));
             }
 
-            if (regions.length === 0) {
-                 regionSelect.innerHTML += '<li><span class="dropdown-item-text text-muted">此會所無小區</span></li>';
-            } else {
-                regions.forEach(region => {
-                    const li = document.createElement('li');
-                    li.className = 'dropdown-item-checkbox';
-                    li.innerHTML = `
-                        <input class="form-check-input" type="checkbox" value="${region}" id="region-${region}">
-                        <label class="form-check-label flex-grow-1" for="region-${region}">${region}</label>
-                    `;
+            regions.forEach(region => {
+                const li = document.createElement('li');
+                li.className = 'dropdown-item-checkbox';
+                li.innerHTML = `
+                    <input class="form-check-input" type="checkbox" value="${region}" id="region-${region}">
+                    <label class="form-check-label flex-grow-1" for="region-${region}">${region}</label>
+                `;
+                
+                // 1. 點擊整行 li 時
+                li.addEventListener('click', (event) => {
+                    event.stopPropagation(); // 保持下拉選單開啟
+
+                    const checkbox = li.querySelector('input[type="checkbox"]');
+                    if (!checkbox) return;
                     
-                    li.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        
-                        const checkbox = li.querySelector('input[type="checkbox"]');
-                        if (checkbox && event.target !== checkbox) {
-                            checkbox.checked = !checkbox.checked;
-                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-                    });
-                    regionSelect.appendChild(li);
+                    // 2. 只有當點擊的目標不是 checkbox 本身時，才手動反轉狀態
+                    //    這樣可以避免和 label 的預設行為衝突
+                    if (event.target !== checkbox) {
+                       checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    // 3. 手動觸發 change 事件，讓統一的監聽器去處理後續動作
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 });
-            }
+
+                regionSelect.appendChild(li);
+            });
         } catch (error) {
             console.error(error);
             regionSelect.innerHTML = '<li><span class="dropdown-item-text text-danger">載入失敗</span></li>';

@@ -89,16 +89,38 @@ body {
 }
 
 /* 頁面標題區塊 */
+/* ★★★ 核心修正：新增固定標頭樣式 ★★★ */
 .header-section {
+  /* 固定定位 */
+  position: sticky;
+  top: 80px; /* 緊貼在 Navbar 下方 */
+  z-index: 1020;
+  
   background: linear-gradient(90deg, var(--c-primary), var(--c-primary-dark));
   color: white;
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-4);
   margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-6) calc(-1 * var(--space-6));
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+.header-title-wrapper {
+  flex-grow: 1; /* 標題佔據主要空間 */
 }
 .header-section h1 {
   font-size: 22px;
   font-weight: 700;
+  margin: 0;
+}
+.header-filters-wrapper {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-shrink: 0; /* 防止篩選器被過度壓縮 */
 }
 
 /* 標題 */
@@ -297,17 +319,50 @@ h4 {
 .dropdown-item-checkbox .form-check-input {
   margin-top: 0;
 }
+/* ★★★ 新增：固定標題與篩選器樣式 ★★★ */
+.sticky-header {
+  position: sticky;
+  /* 80px 是導覽列的高度 */
+  top: 80px; 
+  z-index: 1020; /* 確保在內容之上 */
+  background-color: var(--c-surface);
+  /* 移除 header-section 的 margin-top，因為 sticky-header 已經處理了位置 */
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) 0 calc(-1 * var(--space-6));
+  padding: 0 var(--space-6) var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--c-border);
+}
+.sticky-header .header-section {
+    margin: 0 calc(-1 * var(--space-6)) var(--space-4) calc(-1 * var(--space-6));
+}
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
-  body { padding-top: 70px; }
+ body { padding-top: 70px; }
+  .header-section {
+    top: 70px; /* 手機版導覽列較矮 */
+    flex-direction: column; /* 手機版垂直排列 */
+    align-items: stretch; /* 元素寬度撐滿 */
+  }
   .header-section h1 { font-size: 20px; }
-  .container { width: 95%; padding: var(--space-4); }
+  .container { width: 100%; padding: 0 var(--space-4) var(--space-4) var(--space-4); border: none; box-shadow: none; border-radius: 0; }
   
   #main-floating-button { width: 50px; height: 50px; }
   #sub-buttons { bottom: 80px; }
 
   .navbar .container-fluid { flex-wrap: nowrap; }
+
+  /* ★★★ 新增：優化手機版篩選器大小 ★★★ */
+  .sticky-header {
+    top: 70px; /* 手機版導覽列較矮 */
+    padding: 0 var(--space-4) var(--space-3) var(--space-4);
+  }
+  .dashboard-filters.row {
+    padding: var(--space-3) !important;
+  }
+  .dashboard-filters .form-label {
+      font-size: 14px;
+      margin-bottom: var(--space-1) !important;
+  }
   
   /* ★★★ 修正：調整手機版日期與搜尋框寬度 ★★★ */
   #date-range-container {
