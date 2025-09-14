@@ -98,35 +98,26 @@ body {
 }
 
 
-/* ★★★ 核心修正：重寫 container 和 header-section 樣式 ★★★ */
-/* container 現在只是一個內容包裹器，不再有複雜的內外邊距 */
-.container {
-  padding: var(--space-5);
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-/* header-section 現在是獨立的、可固定的區塊 */
+/* 頁面標題區塊 */
+/* ★★★ 核心修正 2：將 header-section 改為絕對定位 ★★★ */
 .header-section {
-  position: sticky;
-  top: 80px; /* 導覽列的高度 */
-  z-index: 1020;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 10;
   
-  background-color: var(--c-surface);
+  background: var(  --c-primary-light); /* 背景改為與 container 一致的白色 */
+  padding: var(--space-4) var(--space-6) var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--c-border);
-  box-shadow: var(--shadow-sm);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-/* 新增一個包裹層，以限制 header 內容的最大寬度，使其與下方 container 對齊 */
-.header-content-wrapper {
-    max-width: 1000px;
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-4);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
 }
 .header-title-wrapper {
   flex-grow: 1;
@@ -135,7 +126,7 @@ body {
   font-size: 22px;
   font-weight: 700;
   margin: 0;
-  color: var(--c-text-primary);
+  color: var(--c-text-primary); /* 文字改回深色 */
 }
 .header-filters-wrapper {
   display: flex;
@@ -359,18 +350,18 @@ h4 {
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
-   body { padding-top: 70px; }
+  body { padding-top: 70px; }
   .header-section {
-    top: 70px; /* 手機版導覽列較矮 */
-    padding: var(--space-3) var(--space-4);
-  }
-  .header-content-wrapper {
     flex-direction: column;
     align-items: stretch;
+    padding: var(--space-3);
+  }
+  .container {
+    padding-top: 220px; /* 手機版 header 較高，需要更多空間 */
   }
   .header-section h1 { font-size: 20px; }
+  .container { width: 100%; padding: 0 var(--space-4) var(--space-4) var(--space-4); border: none; box-shadow: none; border-radius: 0; }
   
-  .container { width: 100%; padding: var(--space-4); }
   #main-floating-button { width: 50px; height: 50px; }
   #sub-buttons { bottom: 80px; }
 
