@@ -4,43 +4,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const hallRegionFilters = document.getElementById('hallRegionFilters');
     const prayerGroupFilter = document.getElementById('prayerGroupFilter');
     const hallSelect = document.getElementById('hallSelect');
-    const regionSelect = document.getElementById('regionSelect');
+    const regionSelect = document.getElementById('regionSelect'); // 現在是 <ul> 元素
+    const regionDropdown = document.getElementById('regionDropdown'); // 新增的按鈕
     const prayerGroupSelect = document.getElementById('prayerGroupSelect');
     const listContainer = document.getElementById('list-container');
     const listTitle = document.getElementById('list-title');
     const listCount = document.getElementById('list-count');
 
     // --- 資料 ---
-    // 從 config.js 複製 PRAYER_GROUPS，避免前端額外請求
-    /* const PRAYER_GROUPS = {
-        'h3-peace-brothers': { name: 'H3（和平弟兄）' },
-        'h3-peace-sisters':  { name: 'H3（和平姊妹）' },
-        'h3-new-brothers':   { name: 'H3（新生弟兄）' },
-        'h3-new-sisters':    { name: 'H3（新生姊妹）' },
-        'h3-english':        { name: 'H3（英語）' },
-        'h62-sisters':       { name: 'H62（姊妹）' },
-        'h71-brothers':      { name: 'H71（弟兄）' },
-        'h71-sisters':       { name: 'H71（姊妹）' },
-        'h82-brothers':      { name: 'H82（弟兄）' },
-        'h82-sisters':       { name: 'H82（姊妹）' },
-        'h103-brothers':     { name: 'H103（弟兄）' },
-        'h103-sisters':      { name: 'H103（姊妹）' }
-    };
- */
     const PRAYER_GROUPS = window.AppConfig.PRAYER_GROUPS;
+
     // --- 函式 ---
     function loadNavbar() {
         fetch('navbar.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('navbar-container').innerHTML = data;
-                // 在儀表板頁面隱藏日期和搜尋
                 const dateRangeContainer = document.getElementById('date-range-container');
                 if (dateRangeContainer) dateRangeContainer.style.display = 'none';
             });
     }
 
-    // 填充活力組選項
     function populatePrayerGroups() {
         for (const key in PRAYER_GROUPS) {
             const option = document.createElement('option');
@@ -50,35 +34,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 更新小區選項
+    // ★★★ 核心修正：更新此函式以生成複選框 ★★★
     async function updateRegionOptions(hallId) {
-        regionSelect.innerHTML = '<option value="">-- 所有小區 --</option>';
+        regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
             const response = await fetch(`/getRegions?hall=${hallId}`);
-            if (!response.ok) return;
+            if (!response.ok) throw new Error("Failed to fetch regions");
             const regions = await response.json();
-            regions.forEach(region => {
-                const option = document.createElement('option');
-                option.value = region;
-                option.textContent = region;
-                regionSelect.appendChild(option);
-            });
+            regionSelect.innerHTML = ''; // 清空
+
+            if (regions.length === 0) {
+                 regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">此會所無小區</span></li>';
+            } else {
+                regions.forEach(region => {
+                    const li = document.createElement('li');
+                    li.className = 'dropdown-item-checkbox';
+                    // 使用 stopPropagation 避免點擊 label 時關閉選單
+                    li.innerHTML = `
+                        <input class="form-check-input" type="checkbox" value="${region}" id="region-${region}" onclick="event.stopPropagation()">
+                        <label class="form-check-label" for="region-${region}" onclick="event.stopPropagation()">${region}</label>
+                    `;
+                    regionSelect.appendChild(li);
+                });
+            }
         } catch (error) {
-            console.error("Failed to fetch regions:", error);
+            console.error(error);
+            regionSelect.innerHTML = '<li><span class="dropdown-item-text text-danger">載入失敗</span></li>';
         }
     }
 
-    // 獲取並渲染名單
+    // ★★★ 核心修正：更新此函式以處理複選邏輯 ★★★
     async function fetchAndRenderList() {
         const type = viewTypeSelect.value;
         let url = `/api/view-list?type=${type}`;
         
         if (type === 'hall' || type === 'region') {
             const hall = hallSelect.value;
-            const region = regionSelect.value;
+            const selectedRegions = Array.from(regionSelect.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            
             url += `&hall=${hall}`;
-            if (region) url += `&region=${region}`;
-            listTitle.textContent = `${hallSelect.options[hallSelect.selectedIndex].text} ${region ? `/ ${region}` : ''} 名單`;
+            
+            let titleRegionText = '-- 所有小區 --';
+            if (selectedRegions.length > 0) {
+                // 如果有選擇小區，才設定 type=region 和 regions 參數
+                url = `/api/view-list?type=region&hall=${hall}&regions=${selectedRegions.join(',')}`;
+                titleRegionText = selectedRegions.length > 2 ? `已選 ${selectedRegions.length} 個小區` : selectedRegions.join(', ');
+            }
+            regionDropdown.textContent = titleRegionText;
+            listTitle.textContent = `${hallSelect.options[hallSelect.selectedIndex].text} / ${titleRegionText}`;
+
         } else if (type === 'prayer_group') {
             const group = prayerGroupSelect.value;
             url += `&group=${group}`;
@@ -93,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             listCount.textContent = `共 ${data.length} 位`;
-            listContainer.innerHTML = ''; // 清空
+            listContainer.innerHTML = '';
 
             if (data.length === 0) {
                 listContainer.innerHTML = `<div class="col-12 text-center p-5"><p class="text-muted">此分類下尚無名單資料。</p></div>`;
@@ -104,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'col-lg-4 col-md-6 mb-4';
                 
-                // 根據不同類型，卡片內容略有不同
                 let cardBody = `
                     <h5 class="card-title">${person.name}</h5>
                     <p class="card-text mb-1"><small class="text-muted">${person.department || ''}</small></p>
@@ -136,17 +139,25 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderList();
     });
 
-    hallSelect.addEventListener('change', () => {
-        updateRegionOptions(hallSelect.value);
+    hallSelect.addEventListener('change', async () => {
+        await updateRegionOptions(hallSelect.value);
         fetchAndRenderList();
     });
 
-    regionSelect.addEventListener('change', fetchAndRenderList);
+    // ★ 修正：監聽整個 ul 的點擊事件
+    regionSelect.addEventListener('click', (e) => {
+        // 確保只有點擊 checkbox 或 label 時才觸發
+        if (e.target.matches('input[type="checkbox"]') || e.target.matches('label')) {
+            fetchAndRenderList();
+        }
+    });
+
     prayerGroupSelect.addEventListener('change', fetchAndRenderList);
 
     // --- 初始化 ---
     loadNavbar();
     populatePrayerGroups();
-    updateRegionOptions(hallSelect.value); // 載入預設會所的小區
-    fetchAndRenderList(); // 載入預設的列表
+    updateRegionOptions(hallSelect.value).then(() => {
+        fetchAndRenderList(); // 確保小區載入後再抓取列表
+    });
 });

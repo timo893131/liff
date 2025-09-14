@@ -438,10 +438,10 @@ app.listen(port, () => {
 
 
 
-// ★★★ 新增區塊：請將以下整個區塊複製並貼到您的 server.js 中 ★★★
 // --- 牧養名單檢視 API ---
 app.get('/api/view-list', isAuthenticated, async (req, res) => {
-    const { type, hall, region, group } = req.query;
+    // ★ 修正：將 region 改為 regions 以接收多個值
+    const { type, hall, regions, group } = req.query;
 
     try {
         let sheetData = [];
@@ -452,7 +452,7 @@ app.get('/api/view-list', isAuthenticated, async (req, res) => {
             const sheetName = config.HALLS[hall];
             if (!sheetName) return res.status(400).json({ message: `Invalid hall: ${hall}` });
 
-            const range = `'${sheetName}'!A12:F`; // 讀取到系級欄位
+            const range = `'${sheetName}'!A12:F`;
             sheetData = await sheetUtils.getSheetData(range);
 
             finalData = sheetData
@@ -465,11 +465,16 @@ app.get('/api/view-list', isAuthenticated, async (req, res) => {
                 }))
                 .filter(p => p.name && p.name !== '姓名');
 
-            if (type === 'region' && region) {
-                finalData = finalData.filter(p => p.region === region);
+            // ★★★ 核心修正：處理單一或多個小區的篩選邏輯 ★★★
+            if (type === 'region' && regions) {
+                const selectedRegions = regions.split(','); // 將字串轉為陣列
+                if (selectedRegions.length > 0) {
+                    finalData = finalData.filter(p => selectedRegions.includes(p.region));
+                }
             }
 
         } else if (type === 'prayer_group') {
+            // ... (活力組的邏輯保持不變) ...
             if (!group) return res.status(400).json({ message: 'Missing group parameter' });
             const groupInfo = config.PRAYER_GROUPS[group];
             if (!groupInfo) return res.status(400).json({ message: `Invalid prayer group: ${group}` });

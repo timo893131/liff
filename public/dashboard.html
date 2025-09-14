@@ -38,11 +38,16 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label for="regionSelect" class="form-label">選擇小區 (可選)</label>
-                    <select id="regionSelect" class="form-select">
-                        <option value="">-- 所有小區 --</option>
-                        </select>
+                    <label for="regionSelect" class="form-label">選擇小區 (可複選)</label>
+                    <div class="dropdown">
+                        <button class="btn btn-light border dropdown-toggle w-100 text-start" type="button" id="regionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            -- 所有小區 --
+                        </button>
+                        <ul id="regionSelect" class="dropdown-menu w-100" aria-labelledby="regionDropdown">
+                            </ul>
+                    </div>
                 </div>
+            </div>
             </div>
 
             <div id="prayerGroupFilter" class="col-md-8" style="display: none;">

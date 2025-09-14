@@ -280,7 +280,23 @@ h4 {
 .table > tbody > tr:nth-child(odd) > td {
     background-color: var(--c-primary-light);
 }
-
+/* ★★★ 新增：下拉複選框樣式 ★★★ */
+.dropdown-menu {
+  max-height: 280px;
+  overflow-y: auto;
+}
+.dropdown-item-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+.dropdown-item-checkbox:hover {
+  background-color: var(--c-primary-light);
+}
+.dropdown-item-checkbox .form-check-input {
+  margin-top: 0;
+}
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
