@@ -1,4 +1,4 @@
-/* public/css/main.css (最終完美定稿版) */
+/* public/css/main.css (更新版，解決標題列固定問題) */
 
 /* --- 1. 設計系統 (CSS Variables) --- */
 :root {
@@ -7,15 +7,12 @@
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
   --c-primary-light: #eaf5fb;    /* 主題藍 (淺色背景) */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
-  --c-text-secondary: #2980b9;  /* 次要文字 (淺灰) */
+  --c-text-secondary: #2980b9;   /* 次要文字 (淺灰) */
   --c-background: #f8f9fa;      /* 頁面背景 (極淺灰) */
   --c-surface: #ffffff;         /* 內容區塊背景 (白) */
   --c-border: #e9ecef;          /* 邊線顏色 */
   --c-danger: #e74c3c;          /* 危險/刪除 */
   --c-success: #2ecc71;         /* 成功 */
-
-/* public/css/main.css (最終完美定稿版) */
-
 
   /* 陰影 (Shadows) */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
@@ -53,7 +50,6 @@ body {
 }
 
 /* --- 3. 佈局與容器 --- */
-/* ★★★ 核心修正 1：修改 container 佈局 ★★★ */
 .container {
   background-color: var(--c-surface);
   border-radius: var(--radius-lg);
@@ -62,8 +58,7 @@ body {
   max-width: 1000px;
   margin: var(--space-5) auto;
   border: 1px solid var(--c-border);
-  position: relative; /* 讓 header-section 可以相對於它定位 */
-  padding-top: 150px; /* ★ 預留出足夠的空間給固定的 header */
+  padding: var(--space-5);
 }
 
 /* --- 4. 組件樣式 (Components) --- */
@@ -97,27 +92,21 @@ body {
   margin-left: var(--space-5);
 }
 
-
 /* 頁面標題區塊 */
-/* ★★★ 核心修正 2：將 header-section 改為絕對定位 ★★★ */
 .header-section {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  position: sticky;
+  top: 80px; /* 與導覽列高度一致 */
   z-index: 10;
-  
-  background: var(  --c-primary-light); /* 背景改為與 container 一致的白色 */
-  padding: var(--space-4) var(--space-6) var(--space-4) var(--space-6);
+  background: var(--c-surface);
+  padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--c-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
 }
 .header-title-wrapper {
   flex-grow: 1;
@@ -126,7 +115,7 @@ body {
   font-size: 22px;
   font-weight: 700;
   margin: 0;
-  color: var(--c-text-primary); /* 文字改回深色 */
+  color: var(--c-text-primary);
 }
 .header-filters-wrapper {
   display: flex;
@@ -134,7 +123,6 @@ body {
   align-items: center;
   flex-shrink: 0;
 }
-
 
 /* 標題 */
 h3 {
@@ -205,7 +193,6 @@ h4 {
 }
 #sub-buttons button { width: 140px; }
 
-
 /* 點名系統群組 */
 .caregiver-group {
   padding: var(--space-5);
@@ -253,7 +240,6 @@ h4 {
   transition: transform 0.3s ease;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
-/* ★★★ 核心修正：讓 is-open class 來驅動動畫 ★★★ */
 .slider-wrapper.is-open .checkbox-wrapper {
   transform: translateX(-100px);
 }
@@ -288,8 +274,6 @@ h4 {
   transition: all 0.2s ease-out;
   cursor: pointer;
 }
-
-/* ★★★ 新增：複選框文字的互動動畫 ★★★ */
 .checkbox-item label:hover {
   background-color: var(--c-primary-light);
   color: var(--c-primary-dark);
@@ -298,7 +282,6 @@ h4 {
   transform: scale(0.97);
   background-color: var(--c-border);
 }
-
 
 /* Modal */
 .modal-content { background-color: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); }
@@ -315,7 +298,8 @@ h4 {
 .table > tbody > tr:nth-child(odd) > td {
     background-color: var(--c-primary-light);
 }
-/* ★★★ 新增：下拉複選框樣式 ★★★ */
+
+/* 下拉複選框樣式 */
 .dropdown-menu {
   max-height: 280px;
   overflow-y: auto;
@@ -332,73 +316,42 @@ h4 {
 .dropdown-item-checkbox .form-check-input {
   margin-top: 0;
 }
-/* ★★★ 新增：固定標題與篩選器樣式 ★★★ */
-.sticky-header {
-  position: sticky;
-  /* 80px 是導覽列的高度 */
-  top: 80px; 
-  z-index: 1020; /* 確保在內容之上 */
-  background-color: var(--c-surface);
-  /* 移除 header-section 的 margin-top，因為 sticky-header 已經處理了位置 */
-  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) 0 calc(-1 * var(--space-6));
-  padding: 0 var(--space-6) var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--c-border);
-}
-.sticky-header .header-section {
-    margin: 0 calc(-1 * var(--space-6)) var(--space-4) calc(-1 * var(--space-6));
-}
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
   body { padding-top: 70px; }
   .header-section {
+    top: 70px; /* 手機版導覽列高度 */
     flex-direction: column;
     align-items: stretch;
     padding: var(--space-3);
   }
   .container {
-    padding-top: 220px; /* 手機版 header 較高，需要更多空間 */
+    width: 100%;
+    padding: var(--space-4);
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
   }
-  .header-section h1 { font-size: 20px; }
-  .container { width: 100%; padding: 0 var(--space-4) var(--space-4) var(--space-4); border: none; box-shadow: none; border-radius: 0; }
-  
   #main-floating-button { width: 50px; height: 50px; }
   #sub-buttons { bottom: 80px; }
-
   .navbar .container-fluid { flex-wrap: nowrap; }
-
-  /* ★★★ 新增：優化手機版篩選器大小 ★★★ */
-  .sticky-header {
-    top: 70px; /* 手機版導覽列較矮 */
-    padding: 0 var(--space-4) var(--space-3) var(--space-4);
-  }
-  .dashboard-filters.row {
-    padding: var(--space-3) !important;
-  }
-  .dashboard-filters .form-label {
-      font-size: 14px;
-      margin-bottom: var(--space-1) !important;
-  }
-  
-  /* ★★★ 修正：調整手機版日期與搜尋框寬度 ★★★ */
   #date-range-container {
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    
   }
   #date-range-container .form-select {
-    width: 90px; /* 給予日期足夠寬度 */
+    width: 90px;
     font-size: 9px;
   }
   #date-range-container .form-control {
-    width: 90px; /* 給予搜尋框足夠寬度 */
+    width: 90px;
     font-size: 9px;
   }
 }
 
 @media (min-width: 769px) {
-  /* 桌面版滑動刪除改為直接顯示 */
   .slider-wrapper { display: flex; overflow: visible; }
   .checkbox-wrapper { flex-grow: 1; }
   .delete-area {
