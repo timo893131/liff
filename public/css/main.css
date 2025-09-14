@@ -108,7 +108,7 @@ body {
   width: 100%;
   z-index: 10;
   
-  background: var(--c-surface); /* 背景改為與 container 一致的白色 */
+  background: var(  --c-primary-light); /* 背景改為與 container 一致的白色 */
   padding: var(--space-4) var(--space-6) var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--c-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
