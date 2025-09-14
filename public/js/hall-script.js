@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dateRangeSelect.value = defaultCode;
         fetchDataAndUpdateCheckboxes(defaultCode, getHallFromURL());
     }
-
+    
     function formatDateRange(dateCode) {
         const found = dateRanges.find(r => r.code === dateCode);
         return found ? found.range : '載入中...';
@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const addEntryBtn = document.getElementById('add-entry-button');
         if(addEntryBtn) addEntryBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+             e.stopPropagation();
             const modal = new bootstrap.Modal(document.getElementById('addEntryModal'));
             document.getElementById('addEntryForm').reset();
             const hallSelect = document.getElementById('hall');
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statsBtn = document.getElementById('stats-button');
         if(statsBtn) statsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+             e.stopPropagation();
             const selectedDate = dateRangeSelect.value;
             const hall = getHallFromURL();
             fetchStats(selectedDate, hall);
