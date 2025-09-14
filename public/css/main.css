@@ -14,6 +14,9 @@
   --c-danger: #e74c3c;          /* 危險/刪除 */
   --c-success: #2ecc71;         /* 成功 */
 
+/* public/css/main.css (最終完美定稿版) */
+
+
   /* 陰影 (Shadows) */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -32,11 +35,13 @@
   --radius-md: 10px;
   --radius-lg: 16px;
 }
+
+/* --- 2. 全局樣式 --- */
 html,
 body {
   overflow-x: hidden;
 }
-/* --- 2. 全局樣式 --- */
+
 body {
   font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: var(--c-background);
@@ -45,19 +50,20 @@ body {
   padding-top: 80px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
 /* --- 3. 佈局與容器 --- */
+/* ★★★ 核心修正 1：修改 container 佈局 ★★★ */
 .container {
   background-color: var(--c-surface);
-  padding: var(--space-6);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   width: 95%;
   max-width: 1000px;
-  margin: var(--space-2) auto;
+  margin: var(--space-5) auto;
   border: 1px solid var(--c-border);
+  position: relative; /* 讓 header-section 可以相對於它定位 */
+  padding-top: 150px; /* ★ 預留出足夠的空間給固定的 header */
 }
 
 /* --- 4. 組件樣式 (Components) --- */
@@ -72,7 +78,7 @@ body {
 }
 .navbar-brand h3 {
   color: var(--c-primary);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 20px;
 }
 .navbar-toggler {
@@ -87,19 +93,24 @@ body {
 .navbar-nav .nav-link:focus {
   color: var(--c-primary) !important;
 }
+#date-range-container {
+  margin-left: var(--space-5);
+}
+
 
 /* 頁面標題區塊 */
-/* ★★★ 核心修正：新增固定標頭樣式 ★★★ */
+/* ★★★ 核心修正 2：將 header-section 改為絕對定位 ★★★ */
 .header-section {
-  /* 固定定位 */
-  position: sticky;
-  top: 80px; /* 緊貼在 Navbar 下方 */
-  z-index: 1020;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 10;
   
-  background: linear-gradient(90deg, var(--c-primary), var(--c-primary-dark));
-  color: white;
-  padding: var(--space-4);
-  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-6) calc(-1 * var(--space-6));
+  background: var(--c-surface); /* 背景改為與 container 一致的白色 */
+  padding: var(--space-4) var(--space-6) var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--c-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   
   display: flex;
@@ -109,19 +120,21 @@ body {
   gap: var(--space-4);
 }
 .header-title-wrapper {
-  flex-grow: 1; /* 標題佔據主要空間 */
+  flex-grow: 1;
 }
 .header-section h1 {
   font-size: 22px;
   font-weight: 700;
   margin: 0;
+  color: var(--c-text-primary); /* 文字改回深色 */
 }
 .header-filters-wrapper {
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  flex-shrink: 0; /* 防止篩選器被過度壓縮 */
+  flex-shrink: 0;
 }
+
 
 /* 標題 */
 h3 {
@@ -337,11 +350,14 @@ h4 {
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
- body { padding-top: 70px; }
+  body { padding-top: 70px; }
   .header-section {
-    top: 70px; /* 手機版導覽列較矮 */
-    flex-direction: column; /* 手機版垂直排列 */
-    align-items: stretch; /* 元素寬度撐滿 */
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-3);
+  }
+  .container {
+    padding-top: 220px; /* 手機版 header 較高，需要更多空間 */
   }
   .header-section h1 { font-size: 20px; }
   .container { width: 100%; padding: 0 var(--space-4) var(--space-4) var(--space-4); border: none; box-shadow: none; border-radius: 0; }
