@@ -3,7 +3,7 @@
 (function (global, factory) {
   // 這個結構會判斷當前的環境，並使用正確的方式匯出模組
   // 如果是後端 (Node.js)，使用 module.exports
-  // 如果是前端，則將模組掛載到 global (也就是 window) 物件上
+  // 如果是前端，則將模組掛載到 global (也就是 window) 物件上12
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.AppConfig = factory());
 }(this, (function () { 'use strict';
