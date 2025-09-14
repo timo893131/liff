@@ -12,7 +12,7 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const helmet = require('helmet');
 const { google } = require('googleapis');
-const config = require('./public/config');
+const config = require('./public/js/config');
 const sheetUtils = require('./utils/sheet');
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -434,4 +434,60 @@ app.delete('/api/prayer-items/:id', isAuthenticated, validatePrayerHall, async (
 
 app.listen(port, () => {
   logger.info(`Server is running in ${IS_PRODUCTION ? 'production' : 'development'} mode on port ${port}`);
+});
+
+
+
+// ★★★ 新增區塊：請將以下整個區塊複製並貼到您的 server.js 中 ★★★
+// --- 牧養名單檢視 API ---
+app.get('/api/view-list', isAuthenticated, async (req, res) => {
+    const { type, hall, region, group } = req.query;
+
+    try {
+        let sheetData = [];
+        let finalData = [];
+
+        if (type === 'hall' || type === 'region') {
+            if (!hall) return res.status(400).json({ message: 'Missing hall parameter' });
+            const sheetName = config.HALLS[hall];
+            if (!sheetName) return res.status(400).json({ message: `Invalid hall: ${hall}` });
+
+            const range = `'${sheetName}'!A12:F`; // 讀取到系級欄位
+            sheetData = await sheetUtils.getSheetData(range);
+
+            finalData = sheetData
+                .map(row => ({
+                    region: row[1] || '',
+                    name: row[2] || '',
+                    caregiver: row[3] || '無牧之羊',
+                    identity: row[4] || '',
+                    department: row[5] || ''
+                }))
+                .filter(p => p.name && p.name !== '姓名');
+
+            if (type === 'region' && region) {
+                finalData = finalData.filter(p => p.region === region);
+            }
+
+        } else if (type === 'prayer_group') {
+            if (!group) return res.status(400).json({ message: 'Missing group parameter' });
+            const groupInfo = config.PRAYER_GROUPS[group];
+            if (!groupInfo) return res.status(400).json({ message: `Invalid prayer group: ${group}` });
+            
+            const range = `'${config.PRAYER_SHEET}'!${String.fromCharCode(65 + groupInfo.nameCol)}3:${String.fromCharCode(65 + groupInfo.nameCol)}`;
+            sheetData = await sheetUtils.getSheetData(range);
+            
+            finalData = sheetData
+                .map(row => ({ name: row[0] || '' }))
+                .filter(p => p.name);
+
+        } else {
+            return res.status(400).json({ message: 'Invalid type parameter' });
+        }
+
+        res.json(finalData);
+
+    } catch (err) {
+        handleError(res, err, 'Error retrieving view list data');
+    }
 });

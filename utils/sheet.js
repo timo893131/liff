@@ -2,7 +2,7 @@
 require('dotenv').config(); // 將 .env 檔案中的變數載入到 process.env
 const { google } = require('googleapis');
 const NodeCache = require('node-cache');
-const config = require('../public/config');
+const config = require('../public/js/config');
 
 // 初始化快取，快取時間設定為 5 分鐘
 // stdTTL: 標準存留時間(秒)。 checkperiod: 定期檢查過期快取的間隔時間(秒)。

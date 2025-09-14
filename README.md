@@ -1,26 +1,30 @@
-# 牧養點名與權限管理系統 (Shepherding System)
+# 牧養點名與權限管理系統 (Shepherding System) - v2.0 優化版
 
 這是一個專為教會或團體設計的線上牧養點名與權限管理系統，旨在取代傳統的紙本或 Excel 表單，提供一個即時、可協作且安全的資料管理平台。
 
-系統前端使用 HTML/CSS/JavaScript 構建，後端由 Node.js 和 Express 驅動，並以 Google Sheets 作為輕量級的資料庫。專案整合了 LINE Login 進行使用者身份驗證，並實現了基於角色的權限管理。
+此版本 (v2.0) 經過了全面的架構優化與 UI/UX 升級，擁有更強的可維護性、更佳的使用者體驗與更高的安全性。
 
 ## ✨ 主要功能
 
-- **多會所點名系統**:
-    - 支援多個會所（例如：3會所, 62會所, 英語區）獨立的點名頁面。
-    - 以照顧者為單位分組，清晰呈現名單。
-    - 可自訂每週的點名選項 (例如：主日、小排、家聚會等)。
-    - 手機版支援左滑刪除功能，並有動畫提示。
-- **即時數據統計**:
-    - 提供各會所獨立的統計頁面，計算總人數與各項出席人數。
-    - 提供所有會所的數據總覽頁面 (`count.html`)。
-- **代禱牆系統**:
-    - 獨立的代禱牆頁面，用於追踪邀約狀態 (可前來, 無法前來, 未回覆, 未邀約)。
-    - 支援新增、修改、刪除代禱事項。
-- **使用者認證與權限管理**:
+- **前端架構重構**:
+    - **模板化設計**: 採用單一 `hall.html` 模板搭配 URL 參數，取代了過去大量重複的 HTML 頁面，大幅提升可維護性。
+    - **CSS 設計系統**: `main.css` 與 `index.css` 經過專業重構，引入 CSS 變數，建立了一致、乾淨、現代化的設計規範。
+
+- **UI/UX 視覺升級**:
+    - **精緻的視覺介面**: 全站 UI 經過重新打磨，擁有更和諧的色彩、間距、圓角與陰影系統。
+    - **流暢的互動體驗**: 為按鈕、表單、複選框等互動元件增加了細膩的過渡動畫與焦點狀態。
+    - **優化的行動體驗**: 修正了行動裝置上的滑動穿透問題，並恢復了左滑刪除的提示動畫，提供如原生 App 般的穩定操作感。
+
+- **智慧點名系統**:
+    - 支援多會所獨立點名，並透過 `navbar.html` 集中管理。
+    - 以照顧者為單位分組，並能將**無牧人者自動歸類於「無牧之羊」**，讓資料一目了然。
+    - 手機版支援穩定的左滑刪除功能。
+
+- **使用者認證與安全強化**:
     - 整合 **LINE Login** 進行身份驗證。
-    - 實現三級權限管理 (`admin`, `editor`, `guest`)。
-    - 提供僅限管理員 (`admin`) 存取的**使用者管理後台**，可線上修改使用者權限。
+    - 實現三級權限管理 (`admin`, `editor`, `guest`)，並提供管理員後台。
+    - 導入 **`helmet.js`** 中介軟體，設定多種 HTTP 安全標頭，提升應用程式的安全性。
+
 - **高效能後端**:
     - 使用 **Node-Cache** 建立快取機制，大幅降低對 Google Sheets API 的讀取次數，提升回應速度。
     - 使用 **Express Rate Limit** 防止惡意請求，保護伺服器穩定性。
@@ -29,7 +33,7 @@
 
 - **前端**:
     - HTML5
-    - CSS3
+    - CSS3 (搭配 CSS Variables 設計系統)
     - JavaScript (ES6+)
     - Bootstrap 5
 - **後端**:
@@ -38,10 +42,9 @@
     - `googleapis` (用於 Google Sheets API)
     - `passport.js` (搭配 `passport-line`) 進行 LINE 登入驗證
     - `express-session` (用於 Session 管理)
+    - `helmet` (用於提升安全性)
 - **資料庫**:
     - Google Sheets
-- **部署**:
-    - Render (或任何支援 Node.js 的平台)
 
 ## 🚀 專案設定與啟動 (本機開發)
 
@@ -88,7 +91,7 @@
 - `npm start`: 以生產模式啟動伺服器。
 - `npm run dev`: 使用 `nodemon` 啟動開發伺服器，檔案變動時會自動重啟。
 
-## 🌐 API 端點
+## 🌐 API 端點 (更新後)
 
 ### 認證
 - `GET /auth/line`: 重新導向至 LINE 登入頁面。
@@ -108,14 +111,14 @@
 - `GET /getStats`: 獲取指定會所和日期的統計數據。
 
 ### 代禱牆 (需登入)
-- `GET /getPrayerData`: 獲取指定代禱牆的資料。
-- `POST /addPrayer`: 新增代禱事項。
-- `POST /deletePrayer`: 刪除代禱事項。
-- `POST /updatePrayerStatus`: 更新代禱事項的狀態。
+- `GET /api/prayer-items`: 獲取指定代禱牆群組的資料。
+- `POST /api/prayer-items`: 新增代禱事項。
+- `PUT /api/prayer-items/:id`: 更新指定 ID 的代禱事項。
+- `DELETE /api/prayer-items/:id`: 刪除指定 ID 的代禱事項。
 
 ## 部署至 Render
 
-1.  **程式碼準備**: 確保 `server.js` 中的 `cookie.secure` 設定為 `process.env.NODE_ENV === 'production'`。
+1.  **程式碼準備**: 確保 `server.js` 中的 `cookie.secure` 設定為 `IS_PRODUCTION`。
 2.  **Render 設定**:
     - **Build Command**: `npm install`
     - **Start Command**: `node server.js`
