@@ -4,18 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>點名系統</title>
+  
   <link rel="stylesheet" href="css/main.css">
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
   <div id="navbar-container"></div>
 
   <div class="container">
+    
     <div class="header-section">
       <div class="header-title-wrapper">
         <h1><span id="hall-title">載入中...</span> - <span id="current-date">日期載入中...</span></h1>
       </div>
+      
       <div class="header-filters-wrapper" id="date-range-container">
           <select id="date-range" class="form-select">
               </select>
@@ -24,12 +29,102 @@
     </div>
 
     <div id="checkbox-container">
+        <div class="d-flex justify-content-center mt-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
+    </div>
+    
     <div id="stats-container" style="display: none;">
+      <h3>統計數據</h3>
+      <table id="stats-table" class="table table-bordered">
+        <thead>
+          <tr>
+            <th>類別</th>
+            <th>數量</th>
+          </tr>
+        </thead>
+        <tbody id="stats-body"></tbody>
+      </table>
+      <button id="back-to-list" class="btn btn-secondary mt-3">返回列表</button>
+    </div>
+  </div>
+
+  <div id="main-floating-button"><span>☰</span></div>
+  <div id="sub-buttons">
+    <button id="add-entry-button" class="btn btn-primary">新增名單</button>
+    <button id="stats-button" class="btn btn-primary">統計</button>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="submit-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <strong class="me-auto">通知</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
+      <div class="toast-body"></div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addEntryModal" tabindex="-1" aria-labelledby="addEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addEntryModalLabel">新增名單</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addEntryForm">
+            <div class="mb-3">
+              <label for="hall" class="form-label">會所</label>
+              <select class="form-select" id="hall" required>
+                <option value="" disabled>請選擇會所</option>
+                <option value="hall3">3會所</option>
+                <option value="hall3e">3會所英語區</option> 
+                <option value="hall62">62會所</option>
+                <option value="hall71">71會所</option>
+                <option value="hall82">82會所</option>
+                <option value="hall103">103會所</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="region" class="form-label">小區</label>
+              <select class="form-select" id="region" required>
+                <option value="">請先選擇會所...</option>
+              </select>
+            </div>
+             <div class="mb-3">
+              <label for="name" class="form-label">姓名</label>
+              <input type="text" class="form-control" id="name" required>
+            </div>
+            <div class="mb-3">
+              <label for="caregiver" class="form-label">牧人</label>
+              <input type="text" class="form-control" id="caregiver" required>
+            </div>
+            <div class="mb-3">
+              <label for="identity" class="form-label">身份</label>
+              <select class="form-select" id="identity" required>
+                <option value="B">B</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="department" class="form-label">系級</label>
+              <input type="text" class="form-control" id="department"> 
+            </div>
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" class="btn btn-secondary mt-3" id="copy-last">複製上次數據</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  
   <script src="js/hall-script.js"></script>
 </body>
 </html>
