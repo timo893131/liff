@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const prayerGroupFilter = document.getElementById('prayerGroupFilter');
     const hallSelect = document.getElementById('hallSelect');
     const regionSelect = document.getElementById('regionSelect'); // 現在是 <ul> 元素
-    const regionDropdown = document.getElementById('regionDropdown'); // 新增的按鈕
+    const regionDropdown = document.getElementById('regionDropdown');
     const prayerGroupSelect = document.getElementById('prayerGroupSelect');
     const listContainer = document.getElementById('list-container');
     const listTitle = document.getElementById('list-title');
@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：更新此函式以生成複選框 ★★★
+    // ★★★ 核心修正：移除 onclick，改用 addEventListener ★★★
     async function updateRegionOptions(hallId) {
         regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
             const response = await fetch(`/getRegions?hall=${hallId}`);
             if (!response.ok) throw new Error("Failed to fetch regions");
             const regions = await response.json();
-            regionSelect.innerHTML = ''; // 清空
+            regionSelect.innerHTML = '';
 
             if (regions.length === 0) {
                  regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">此會所無小區</span></li>';
@@ -49,11 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 regions.forEach(region => {
                     const li = document.createElement('li');
                     li.className = 'dropdown-item-checkbox';
-                    // 使用 stopPropagation 避免點擊 label 時關閉選單
-                    li.innerHTML = `
-                        <input class="form-check-input" type="checkbox" value="${region}" id="region-${region}" onclick="event.stopPropagation()">
-                        <label class="form-check-label" for="region-${region}" onclick="event.stopPropagation()">${region}</label>
-                    `;
+                    
+                    const input = document.createElement('input');
+                    input.className = 'form-check-input';
+                    input.type = 'checkbox';
+                    input.value = region;
+                    input.id = `region-${region}`;
+
+                    const label = document.createElement('label');
+                    label.className = 'form-check-label';
+                    label.setAttribute('for', `region-${region}`);
+                    label.textContent = region;
+
+                    // 將事件監聽器綁定到 li 元素上
+                    // 這樣點擊 li 範圍內的任何地方 (包括 input 和 label) 都會觸發
+                    li.addEventListener('click', (event) => {
+                        // 阻止事件冒泡，這樣下拉選單就不會關閉
+                        event.stopPropagation();
+                    });
+
+                    li.appendChild(input);
+                    li.appendChild(label);
                     regionSelect.appendChild(li);
                 });
             }
@@ -63,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：更新此函式以處理複選邏輯 ★★★
     async function fetchAndRenderList() {
         const type = viewTypeSelect.value;
         let url = `/api/view-list?type=${type}`;
@@ -76,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let titleRegionText = '-- 所有小區 --';
             if (selectedRegions.length > 0) {
-                // 如果有選擇小區，才設定 type=region 和 regions 參數
                 url = `/api/view-list?type=region&hall=${hall}&regions=${selectedRegions.join(',')}`;
                 titleRegionText = selectedRegions.length > 2 ? `已選 ${selectedRegions.length} 個小區` : selectedRegions.join(', ');
             }
@@ -144,10 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderList();
     });
 
-    // ★ 修正：監聽整個 ul 的點擊事件
     regionSelect.addEventListener('click', (e) => {
-        // 確保只有點擊 checkbox 或 label 時才觸發
-        if (e.target.matches('input[type="checkbox"]') || e.target.matches('label')) {
+        if (e.target.matches('input[type="checkbox"]')) {
             fetchAndRenderList();
         }
     });
@@ -158,6 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadNavbar();
     populatePrayerGroups();
     updateRegionOptions(hallSelect.value).then(() => {
-        fetchAndRenderList(); // 確保小區載入後再抓取列表
+        fetchAndRenderList();
     });
 });
