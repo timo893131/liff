@@ -5,7 +5,7 @@
   /* 色彩系統 (Color System) */
   --c-primary: #3498db;          /* 主題藍 */
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
-  --c-primary-light: #eaf5fb;    /* 主題藍 (淺色背景) */
+  --c-primary-light: #94d2f3;    /* 主題藍 (淺色背景) */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
   --c-text-secondary: #2980b9;   /* 次要文字 (淺灰) */
   --c-background: #f8f9fa;      /* 頁面背景 (極淺灰) */
@@ -95,9 +95,9 @@ body {
 /* 頁面標題區塊 */
 .header-section {
   position: sticky;
-  top: 80px; /* 與導覽列高度一致 */
+  top: 60px; /* 與導覽列高度一致 */
   z-index: 10;
-  background: var(--c-surface);
+  background: var(--c-primary-light);
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--c-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
