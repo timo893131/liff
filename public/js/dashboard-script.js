@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：重構此函式以實現點擊整行勾選 ★★★
+    // ★★★ 核心修正：重構事件綁定邏輯 ★★★
     async function updateRegionOptions(hallId) {
         regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
@@ -54,19 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label class="form-check-label flex-grow-1" for="region-${region}">${region}</label>
                     `;
                     
-                    // 1. 將事件監聽器綁定到 li 元素
+                    // 1. 點擊整行 li 的主要目的是切換 checkbox 狀態
                     li.addEventListener('click', (event) => {
-                        // 2. 阻止事件冒泡，保持下拉選單開啟
-                        event.stopPropagation();
-                        
+                        event.stopPropagation(); // 阻止下拉選單關閉
+
                         const checkbox = li.querySelector('input[type="checkbox"]');
-                        if (checkbox) {
-                            // 3. 如果點擊的不是 checkbox 本身，就手動反轉其狀態
-                            if (event.target !== checkbox) {
-                                checkbox.checked = !checkbox.checked;
-                            }
-                            // 4. 觸發列表刷新
-                            fetchAndRenderList();
+                        if (checkbox && event.target !== checkbox) {
+                            // 如果點擊的不是 checkbox 本身 (例如點到 label 或空白處)，
+                            // 就手動反轉其狀態。
+                            checkbox.checked = !checkbox.checked;
+
+                            // 2. 手動觸發一個 'change' 事件，讓我們的監聽器知道狀態改變了
+                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     });
 
@@ -90,11 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let titleRegionText = '-- 所有小區 --';
             
             if (selectedRegions.length > 0) {
-                // 如果有選擇小區，設定 type=region 和 regions 參數
                 url = `/api/view-list?type=region&hall=${hall}&regions=${selectedRegions.join(',')}`;
                 titleRegionText = selectedRegions.length > 2 ? `已選 ${selectedRegions.length} 個小區` : selectedRegions.join(', ');
             } else {
-                // 如果沒有選擇小區，則請求整個會所
                 url = `/api/view-list?type=hall&hall=${hall}`;
             }
 
@@ -162,7 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderList();
     });
 
-    // 移除舊的 regionSelect 監聽器，因為邏輯已移至 li 元素上
+    // ★★★ 核心修正：監聽 checkbox 的 'change' 事件來刷新列表 ★★★
+    regionSelect.addEventListener('change', (e) => {
+        // 使用事件委派，確保只有 checkbox 的狀態改變才會觸發
+        if (e.target.matches('input[type="checkbox"]')) {
+            fetchAndRenderList();
+        }
+    });
 
     prayerGroupSelect.addEventListener('change', fetchAndRenderList);
 
