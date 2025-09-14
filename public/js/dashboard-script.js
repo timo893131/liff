@@ -34,17 +34,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★★★ 核心修正：重構事件綁定邏輯 ★★★
+    // ★★★ 核心修正：新增「所有小區」選項與邏輯 ★★★
     async function updateRegionOptions(hallId) {
         regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">載入中...</span></li>';
         try {
             const response = await fetch(`/getRegions?hall=${hallId}`);
             if (!response.ok) throw new Error("Failed to fetch regions");
             const regions = await response.json();
-            regionSelect.innerHTML = '';
+            regionSelect.innerHTML = ''; // 清空
+
+            // 1. 新增「所有小區」選項
+            const allRegionsLi = document.createElement('li');
+            allRegionsLi.innerHTML = '<a class="dropdown-item fw-bold" href="#">-- 所有小區 --</a>';
+            allRegionsLi.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                // 取消所有其他勾選
+                regionSelect.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                // 立即刷新列表
+                fetchAndRenderList();
+            });
+            regionSelect.appendChild(allRegionsLi);
+            
+            // 新增分隔線
+            if (regions.length > 0) {
+                regionSelect.appendChild(document.createElement('hr'));
+            }
 
             if (regions.length === 0) {
-                 regionSelect.innerHTML = '<li><span class="dropdown-item-text text-muted">此會所無小區</span></li>';
+                 regionSelect.innerHTML += '<li><span class="dropdown-item-text text-muted">此會所無小區</span></li>';
             } else {
                 regions.forEach(region => {
                     const li = document.createElement('li');
@@ -54,21 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label class="form-check-label flex-grow-1" for="region-${region}">${region}</label>
                     `;
                     
-                    // 1. 點擊整行 li 的主要目的是切換 checkbox 狀態
                     li.addEventListener('click', (event) => {
-                        event.stopPropagation(); // 阻止下拉選單關閉
-
+                        event.stopPropagation();
+                        
                         const checkbox = li.querySelector('input[type="checkbox"]');
                         if (checkbox && event.target !== checkbox) {
-                            // 如果點擊的不是 checkbox 本身 (例如點到 label 或空白處)，
-                            // 就手動反轉其狀態。
                             checkbox.checked = !checkbox.checked;
-
-                            // 2. 手動觸發一個 'change' 事件，讓我們的監聽器知道狀態改變了
                             checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     });
-
                     regionSelect.appendChild(li);
                 });
             }
@@ -159,9 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRenderList();
     });
 
-    // ★★★ 核心修正：監聽 checkbox 的 'change' 事件來刷新列表 ★★★
     regionSelect.addEventListener('change', (e) => {
-        // 使用事件委派，確保只有 checkbox 的狀態改變才會觸發
         if (e.target.matches('input[type="checkbox"]')) {
             fetchAndRenderList();
         }
