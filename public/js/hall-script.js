@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (subButtons) subButtons.style.display = isSubButtonsVisible ? 'flex' : 'none';
         });
         document.addEventListener('click', (e) => {
-            if (isSubButtonsVisible && !subButtons.contains(e.target)) {
+            if (isSubButtonsVisible && subButtons && !subButtons.contains(e.target)) {
                 hideSubButtons();
             }
         });
