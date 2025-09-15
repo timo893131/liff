@@ -142,8 +142,8 @@ body {
     border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
-    margin-top: var(--space-5); /* 20px */
-    margin: var(--space-4) auto;
+    margin-top: 100px; /* 20px */
+    
     max-width: var(--content-max-width);
 }
 
