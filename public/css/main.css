@@ -96,7 +96,7 @@ body {
   max-width: 100%;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 /* 限制 header 內容寬度，使其與下方 container 對齊 */
 .header-content-wrapper {
@@ -125,7 +125,7 @@ body {
 /* container 只負責包裹滾動的內容 */
 .container {
   max-width: var(--content-max-width);
-  padding: 0 var(--space-5) var(--space-5) var(--space-5);
+  padding: 0 var(--space-6) var(--space-5) var(--space-5);
   margin: 0 auto;
 }
 .container--full {
