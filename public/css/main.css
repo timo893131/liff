@@ -1,11 +1,11 @@
-/* public/css/main.css (更新版，解決標題列固定問題) */
+/* public/css/main.css (更新版，解決 navbar 與 header 間距及遮擋問題) */
 
 /* --- 1. 設計系統 (CSS Variables) --- */
 :root {
   /* 色彩系統 (Color System) */
   --c-primary: #3498db;          /* 主題藍 */
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
-  --c-primary-light: #b7ddf1;    /* 主題藍 (淺色背景) */
+  --c-primary-light: #b2ddf5;    /* 主題藍 (淺色背景) */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
   --c-text-secondary: #2980b9;   /* 次要文字 (淺灰) */
   --c-background: #f8f9fa;      /* 頁面背景 (極淺灰) */
@@ -44,7 +44,7 @@ body {
   background-color: var(--c-background);
   color: var(--c-text-primary);
   margin: 0;
-  padding-top: 40px;
+  padding-top: 60px; /* 縮減間距，桌面版導覽列高度 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -56,7 +56,7 @@ body {
   box-shadow: var(--shadow-md);
   width: 95%;
   max-width: 1000px;
-  margin: var(--space-5) auto;
+  margin: var(--space-5) auto var(--space-5) auto; /* 為 header-section 預留空間 */
   border: 1px solid var(--c-border);
   padding: var(--space-5);
 }
@@ -68,8 +68,11 @@ body {
   background-color: var(--c-surface) !important;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-4); /* 縮減導覽列內邊距 */
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1030;
 }
 .navbar-brand h3 {
   color: var(--c-primary);
@@ -95,10 +98,10 @@ body {
 /* 頁面標題區塊 */
 .header-section {
   position: sticky;
-  top: 40px; /* 與導覽列高度一致 */
+  top: 60px; /* 與導覽列高度一致 */
   z-index: 10;
   background: var(--c-primary-light);
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-6);
   border-bottom: 1px solid var(--c-border);
   width: 95%;
   max-width: 1000px;
@@ -115,7 +118,7 @@ body {
   flex-grow: 1;
 }
 .header-section h1 {
-  font-size: 22px;
+  font-size: 20px; /* 縮減字體大小，減少垂直空間 */
   font-weight: 700;
   margin: 0;
   color: var(--c-text-primary);
@@ -322,12 +325,12 @@ h4 {
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
-  body { padding-top: 70px; }
+  body { padding-top: 50px; } /* 手機版導覽列高度縮減 */
   .header-section {
-    top: 70px; /* 手機版導覽列高度 */
+    top: 50px; /* 與手機版導覽列高度一致 */
     flex-direction: column;
     align-items: stretch;
-    padding: var(--space-3);
+    padding: var(--space-2);
     width: 100%;
     border-radius: 0;
   }
@@ -337,6 +340,7 @@ h4 {
     border: none;
     box-shadow: none;
     border-radius: 0;
+    margin-top: var(--space-6); /* 為 header-section 預留空間 */
   }
   #main-floating-button { width: 50px; height: 50px; }
   #sub-buttons { bottom: 80px; }
@@ -347,12 +351,15 @@ h4 {
     align-items: center;
   }
   #date-range-container .form-select {
-    width: 110px;
-    font-size: 11px;
+    width: 90px;
+    font-size: 9px;
   }
   #date-range-container .form-control {
-    width: 110px;
-    font-size: 11px;
+    width: 90px;
+    font-size: 9px;
+  }
+  .header-section h1 {
+    font-size: 18px; /* 手機版縮減字體大小 */
   }
 }
 
