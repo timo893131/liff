@@ -91,7 +91,7 @@ body {
   top: var(--navbar-height);
   z-index: 1020;
   background-color: var(--c-background);
-  padding: var(--space-2); var(--space-4);
+  padding: var(--space-2) var(--space-4);
   width: 100%;
   max-width: 100%;
   border-bottom: 1px solid var(--c-border);
