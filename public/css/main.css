@@ -3,7 +3,7 @@
 /* --- 1. 設計系統 (CSS Variables) --- */
 /* 這裡是您網站的視覺核心。只需修改這裡的數值，就能輕鬆改變整個網站的外觀。*/
 :root {
-  /* 色彩系統 */
+  /* 色彩系統 (Color System) */
   --c-primary: #3498db;          /* 主題藍 */
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
   --c-primary-light: #eaf5fb;    /* 主題藍 (淺色背景) */
@@ -15,9 +15,10 @@
   --c-danger: #e74c3c;          /* 危險/刪除 */
   --c-success: #2ecc71;         /* 成功 */
 
-  /* 陰影 */
+  /* 陰影 (Shadows) */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
 
   /* 間距 (Spacing) - 用於 padding, margin, gap */
   --space-2: 8px;
@@ -26,7 +27,8 @@
   --space-5: 20px;
   --space-6: 24px;
 
-  /* 圓角 */
+  /* 圓角 (Border Radius) */
+  --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   
@@ -64,9 +66,21 @@ body {
   font-weight: 700;
   font-size: 20px;
 }
+.navbar-toggler {
+  border: 1px solid var(--c-border);
+}
+.navbar-nav .nav-link {
+  color: var(--c-text-secondary) !important;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+  color: var(--c-primary) !important;
+}
 
 /* 固定的頁首區塊 (Sticky Header) */
-.header-section {
+.header-section, .sticky-header {
   position: sticky;
   top: var(--navbar-height);
   z-index: 1020;
@@ -89,6 +103,8 @@ body {
 .header-section h1 {
   font-size: 22px;
   color: var(--c-text-primary);
+  margin: 0;
+  font-weight: 700;
 }
 .header-filters-wrapper {
   display: flex;
@@ -104,6 +120,24 @@ body {
   padding: 0 var(--space-5) var(--space-5) var(--space-5);
   margin: 0 auto;
 }
+/* 移除 hall.html 和 count.html 中 container 的預設樣式 */
+body > .container {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+}
+/* 讓內容區塊有自己的背景和樣式 */
+#checkbox-container, #stats-container {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin: var(--space-4) auto;
+    max-width: var(--content-max-width);
+}
 
 /* --- 4. 組件樣式 (Components) --- */
 
@@ -117,7 +151,9 @@ body {
   box-shadow: var(--shadow-md);
 }
 .caregiver-group h3 {
+  font-size: 18px;
   color: var(--c-primary-dark);
+  font-weight: 600;
 }
 
 /* 滑動刪除 */
@@ -159,11 +195,115 @@ body {
   transform: translateX(0);
 }
 
-/* ... 其餘所有 CSS 樣式(按鈕, 表單等)都已包含，此處為簡潔省略 ... */
+/* 複選框 */
+.checkbox-item { display: flex; align-items: center; gap: var(--space-3); }
+.checkbox-item input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--c-primary); }
+.checkbox-item label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-text-primary);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+}
+.checkbox-item label:hover {
+  background-color: var(--c-primary-light);
+  color: var(--c-primary-dark);
+}
+.checkbox-item label:active {
+  transform: scale(0.97);
+  background-color: var(--c-border);
+}
+
+/* 按鈕 */
+.btn {
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  padding: var(--space-3) var(--space-5);
+  transition: all 0.2s ease-in-out;
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-primary-light), 0 0 0 5px var(--c-primary);
+}
+.btn-primary, .submit-group-btn {
+  background-color: var(--c-primary);
+  color: white;
+}
+.btn-primary:hover, .submit-group-btn:hover {
+  background-color: var(--c-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: white;
+}
+
+/* 浮動按鈕 */
+#main-floating-button {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  width: 56px;
+  height: 56px;
+  background: var(--c-primary);
+  border-radius: 50%;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#main-floating-button:hover {
+  transform: scale(1.1) rotate(90deg);
+}
+#main-floating-button span { font-size: 24px; color: white; }
+#sub-buttons {
+  position: fixed;
+  bottom: 90px;
+  right: var(--space-5);
+  display: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  z-index: 999;
+}
+#sub-buttons button { width: 140px; }
+
+/* 表單與輸入框 */
+.form-control, .form-select {
+  background-color: var(--c-background);
+  color: var(--c-text-primary);
+  border-color: var(--c-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+.form-control:focus, .form-select:focus {
+  background-color: var(--c-surface);
+  color: var(--c-text-primary);
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-light);
+}
+
+/* Modal */
+.modal-content { background-color: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); }
+.modal-header { background-color: var(--c-primary); color: white; border-bottom: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+/* 統計表格 */
+.table { border-radius: var(--radius-md); overflow: hidden; }
+.table > thead {
+  background-color: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary-dark);
+}
+.table > tbody > tr:nth-child(odd) > td {
+    background-color: var(--c-primary-light);
+}
 
 
 /* --- 5. 響應式設計 (RWD) --- */
-@media (max-width: 768px) {
+@media (max-width: 991.98px) {
   :root {
       --navbar-height: 60px; /* 手機版導覽列較矮 */
   }
@@ -176,4 +316,32 @@ body {
     align-items: stretch;
   }
   .header-section h1 { font-size: 20px; }
+  
+  .container {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+  }
+
+  /* 手機版展開的選單 */
+  .navbar-collapse {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-top: var(--space-3);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+@media (min-width: 769px) {
+  /* 桌面版滑動刪除改為直接顯示 */
+  .slider-wrapper { display: flex; overflow: visible; }
+  .checkbox-wrapper { flex-grow: 1; }
+  .delete-area {
+    position: static;
+    transform: translateX(0);
+    background-color: transparent;
+    width: auto;
+    padding-left: var(--space-4);
+  }
+  .delete-area .delete-btn { background-color: var(--c-danger); }
 }
