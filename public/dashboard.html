@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>牧養總覽</title>
     <link rel="stylesheet" href="css/main.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,50 +11,53 @@
 <body>
     <div id="navbar-container"></div>
 
-    <div class="container" style="margin-top: 80px;">
-        <div class="sticky-header">
-            <div class="header-section">
-                <h1>牧養名單總覽</h1>
+    <div class="sticky-header">
+      <div class="header-content-wrapper">
+        <div class="header-title-wrapper">
+            <h1>牧養名單總覽</h1>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container">
+        <div class="row g-2 mb-4 p-3 bg-light border rounded-3 dashboard-filters">
+            
+            <div class="col-12">
+                <label for="viewTypeSelect" class="form-label">檢視類型</label>
+                <select id="viewTypeSelect" class="form-select">
+                    <option value="hall" selected>依會所/小區</option>
+                    <option value="prayer_group">依活力組</option>
+                </select>
             </div>
 
-            <div class="row g-3 mb-4 p-3 bg-light border rounded-3 dashboard-filters">
-                <div class="col-md-4">
-                    <label for="viewTypeSelect" class="form-label">檢視類型</label>
-                    <select id="viewTypeSelect" class="form-select">
-                        <option value="hall" selected>依會所/小區</option>
-                        <option value="prayer_group">依活力組</option>
+            <div id="hallRegionFilters" class="col-12 row g-2 m-0">
+                <div class="col-md-6 col-12">
+                    <label for="hallSelect" class="form-label">選擇會所</label>
+                    <select id="hallSelect" class="form-select">
+                        <option value="hall3">3會所</option>
+                        <option value="hall3e">3會所英語區</option>
+                        <option value="hall62">62會所</option>
+                        <option value="hall71">71會所</option>
+                        <option value="hall82">82會所</option>
+                        <option value="hall103">103會所</option>
                     </select>
                 </div>
-
-                <div id="hallRegionFilters" class="col-md-8 row g-3">
-                    <div class="col-md-6">
-                        <label for="hallSelect" class="form-label">選擇會所</label>
-                        <select id="hallSelect" class="form-select">
-                            <option value="hall3">3會所</option>
-                            <option value="hall3e">3會所英語區</option>
-                            <option value="hall62">62會所</option>
-                            <option value="hall71">71會所</option>
-                            <option value="hall82">82會所</option>
-                            <option value="hall103">103會所</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="regionDropdown" class="form-label">選擇小區 (可複選)</label>
-                        <div class="dropdown">
-                            <button class="btn btn-light border dropdown-toggle w-100 text-start" type="button" id="regionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                -- 所有小區 --
-                            </button>
-                            <ul id="regionSelect" class="dropdown-menu w-100" aria-labelledby="regionDropdown">
-                                </ul>
-                        </div>
+                <div class="col-md-6 col-12">
+                    <label for="regionDropdown" class="form-label">選擇小區 (可複選)</label>
+                    <div class="dropdown">
+                        <button class="btn btn-light border dropdown-toggle w-100 text-start" type="button" id="regionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            -- 所有小區 --
+                        </button>
+                        <ul id="regionSelect" class="dropdown-menu w-100" aria-labelledby="regionDropdown">
+                            </ul>
                     </div>
                 </div>
+            </div>
 
-                <div id="prayerGroupFilter" class="col-md-8" style="display: none;">
-                    <label for="prayerGroupSelect" class="form-label">選擇活力組</label>
-                    <select id="prayerGroupSelect" class="form-select">
-                        </select>
-                </div>
+            <div id="prayerGroupFilter" class="col-12" style="display: none;">
+                <label for="prayerGroupSelect" class="form-label">選擇活力組</label>
+                <select id="prayerGroupSelect" class="form-select">
+                    </select>
             </div>
         </div>
 
