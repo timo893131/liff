@@ -8,12 +8,12 @@
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
   --c-primary-light: #eaf5fb;    /* 主題藍 (淺色背景) */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
-  --c-text-secondary: #85929e;  /* 次要文字 (淺灰) */
-  --c-background: #f8f9fa;      /* 頁面背景 (極淺灰) */
-  --c-surface: #ffffff;         /* 內容區塊背景 (白) */
-  --c-border: #e9ecef;          /* 邊線顏色 */
-  --c-danger: #e74c3c;          /* 危險/刪除 */
-  --c-success: #2ecc71;         /* 成功 */
+  --c-text-secondary: #6b7280;   /* 次要文字 (更深的灰色，提高對比度) */
+  --c-background: #f8f9fa;       /* 頁面背景 (極淺灰) */
+  --c-surface: #ffffff;          /* 內容區塊背景 (白) */
+  --c-border: #e9ecef;           /* 邊線顏色 */
+  --c-danger: #e74c3c;           /* 危險/刪除 */
+  --c-success: #2ecc71;          /* 成功 */
 
   /* 陰影 (Shadows) */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
@@ -21,6 +21,7 @@
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
 
   /* 間距 (Spacing) - 用於 padding, margin, gap */
+  --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
@@ -78,6 +79,11 @@ body {
 .navbar-nav .nav-link:focus {
   color: var(--c-primary) !important;
 }
+.navbar-nav .nav-link:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  background-color: var(--c-primary-light);
+}
 
 /* 固定的頁首區塊 (Sticky Header) */
 .header-section, .sticky-header {
@@ -120,8 +126,7 @@ body {
   padding: 0 var(--space-5) var(--space-5) var(--space-5);
   margin: 0 auto;
 }
-/* 移除 hall.html 和 count.html 中 container 的預設樣式 */
-body > .container {
+.container--full {
     background-color: transparent;
     border: none;
     box-shadow: none;
@@ -154,6 +159,14 @@ body > .container {
   font-size: 18px;
   color: var(--c-primary-dark);
   font-weight: 600;
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--c-primary-light);
+  margin-bottom: var(--space-4);
+}
+.caregiver-group:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
 }
 
 /* 滑動刪除 */
@@ -194,10 +207,18 @@ body > .container {
 .slider-wrapper.is-open .delete-area {
   transform: translateX(0);
 }
+.slider-wrapper.is-sliding .delete-area {
+  background-color: color-mix(in srgb, var(--c-danger) 70%, var(--c-primary) 30%);
+}
 
 /* 複選框 */
 .checkbox-item { display: flex; align-items: center; gap: var(--space-3); }
 .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--c-primary); }
+.checkbox-item input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--c-primary-light);
+}
 .checkbox-item label {
   font-size: 16px;
   font-weight: 500;
@@ -213,7 +234,7 @@ body > .container {
 }
 .checkbox-item label:active {
   transform: scale(0.97);
-  background-color: var(--c-border);
+  opacity: 0.9;
 }
 
 /* 按鈕 */
@@ -234,7 +255,7 @@ body > .container {
 }
 .btn-primary:hover, .submit-group-btn:hover {
   background-color: var(--c-primary-dark);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
   box-shadow: var(--shadow-md);
   color: white;
 }
@@ -256,17 +277,32 @@ body > .container {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 #main-floating-button:hover {
-  transform: scale(1.1) rotate(90deg);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg), 0 0 15px rgba(52, 152, 219, 0.3);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1.1); }
+  50% { transform: scale(1.15); }
 }
 #main-floating-button span { font-size: 24px; color: white; }
 #sub-buttons {
   position: fixed;
   bottom: 90px;
   right: var(--space-5);
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: var(--space-4);
   z-index: 999;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+#sub-buttons.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 #sub-buttons button { width: 140px; }
 
@@ -284,6 +320,18 @@ body > .container {
   border-color: var(--c-primary);
   box-shadow: 0 0 0 3px var(--c-primary-light);
 }
+.modal-body .mb-3 {
+  margin-bottom: var(--space-4) !important;
+}
+.form-label.required::after {
+  content: '*';
+  color: var(--c-danger);
+  margin-left: var(--space-1);
+}
+.form-control:required,
+.form-select:required {
+  border-left: 3px solid var(--c-primary);
+}
 
 /* Modal */
 .modal-content { background-color: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); }
@@ -298,9 +346,23 @@ body > .container {
   border-color: var(--c-primary-dark);
 }
 .table > tbody > tr:nth-child(odd) > td {
-    background-color: var(--c-primary-light);
+    background-color: color-mix(in srgb, var(--c-primary-light) 80%, var(--c-primary) 20%);
+}
+.table > tbody > tr:hover > td {
+  background-color: var(--c-primary-light);
+  transition: background-color 0.2s ease;
 }
 
+/* 載入動畫 */
+.spinner-border {
+  border-color: var(--c-primary-light);
+  border-right-color: var(--c-primary);
+  animation: spin 1s ease-in-out infinite, pulse-opacity 1.5s ease-in-out infinite;
+}
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 991.98px) {
@@ -329,6 +391,32 @@ body > .container {
     padding: var(--space-4);
     margin-top: var(--space-3);
     box-shadow: var(--shadow-md);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: top;
+  }
+  .navbar-collapse.show {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  .navbar-collapse:not(.show) {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  #main-floating-button {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    width: 48px;
+    height: 48px;
+  }
+  #main-floating-button span {
+    font-size: 20px;
+  }
+  #sub-buttons {
+    bottom: 80px;
+    right: var(--space-4);
   }
 }
 

@@ -23,6 +23,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const checkboxContainer = document.querySelector('#checkbox-container');
 
+    // --- 工具函數 ---
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    async function fetchAPI(url, options = {}) {
+      try {
+        const response = await fetch(url, { credentials: 'include', ...options });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || '請求失敗');
+        }
+        return await response.json();
+      } catch (error) {
+        showToast(error.message, 'danger');
+        throw error;
+      }
+    }
+
     // --- 函式定義 ---
 
     function getHallFromURL() {
@@ -45,24 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchAndSetDateRanges() {
-        try {
-            const response = await fetch('/getDateRanges', { credentials: 'include' });
-            if (!response.ok) throw new Error('無法從伺服器獲取日期');
-            
-            const data = await response.json();
-            dateRanges = data.dateRanges || [];
-
-            populateDateRangeSelect();
-            if (dateRanges.length > 0) {
-                setDefaultDate();
-            }
-        } catch (error) {
-            console.error('Error fetching date ranges:', error);
-            showToast(error.message, 'danger');
-            currentDateSpan.textContent = '載入失敗';
-            dateRangeSelect.innerHTML = '<option value="">載入失敗</option>';
-            checkboxContainer.innerHTML = `<div class="alert alert-danger">無法載入點名資料，因為日期範圍獲取失敗。</div>`;
-        }
+      try {
+          const data = await fetchAPI('/getDateRanges');
+          dateRanges = data.dateRanges || [];
+          populateDateRangeSelect();
+          if (dateRanges.length > 0) {
+              setDefaultDate();
+          }
+      } catch (error) {
+          console.error('Error fetching date ranges:', error);
+          currentDateSpan.textContent = '載入失敗';
+          dateRangeSelect.innerHTML = '<option value="">載入失敗</option>';
+          checkboxContainer.innerHTML = `<div class="alert alert-danger">無法載入點名資料，因為日期範圍獲取失敗。</div>`;
+      }
     }
 
     function populateDateRangeSelect() {
@@ -109,7 +127,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('navbar.html')
             .then(response => response.text())
             .then(data => {
-                document.getElementById('navbar-container').innerHTML = data;
+                const nav = document.createElement('nav');
+                nav.className = 'navbar navbar-expand-lg fixed-top';
+                nav.innerHTML = data;
+                document.body.prepend(nav);
                 checkAdmin();
             });
     }
@@ -211,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = document.createElement('label');
             label.setAttribute('for', id);
             label.textContent = option;
+            label.setAttribute('aria-label', `${person.name} 的 ${option} 狀態`);
             item.append(checkbox, label);
             checkboxWrapper.appendChild(item);
         });
@@ -226,10 +248,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sliderWrapper.addEventListener('touchmove', (e) => {
                 touchEndX = e.targetTouches[0].clientX;
+                const deltaX = touchStartX - touchEndX;
+                if (Math.abs(deltaX) > 20) {
+                  sliderWrapper.classList.add('is-sliding');
+                } else {
+                  sliderWrapper.classList.remove('is-sliding');
+                }
             }, { passive: true });
 
             sliderWrapper.addEventListener('touchend', () => {
                 sliderWrapper.style.transition = 'transform 0.3s ease';
+                sliderWrapper.classList.remove('is-sliding');
                 const deltaX = touchStartX - touchEndX;
                 if (deltaX > 80) { 
                     sliderWrapper.classList.add('is-open');
@@ -332,9 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const regionSelect = document.getElementById('region');
         regionSelect.innerHTML = '<option value="">載入中...</option>';
         try {
-            const response = await fetch(`/getRegions?hall=${hallId}`, { credentials: 'include' });
-            if (!response.ok) throw new Error('無法獲取小區資料');
-            const regions = await response.json();
+            const regions = await fetchAPI(`/getRegions?hall=${hallId}`);
             regionSelect.innerHTML = '<option value="" disabled selected>請選擇小區</option>';
             if (regions.length > 0) {
                 regions.forEach(region => {
@@ -352,22 +379,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function fetchStats(selectedDate, hall) {
-        fetch(`/getStats?selectedDate=${selectedDate}&hall=${hall}`, { credentials: 'include' })
-            .then(response => {
-                if (!response.ok) { throw new Error('獲取統計資料失敗'); }
-                return response.json();
-            })
-            .then(data => {
-                renderStats(data);
-                document.getElementById('stats-container').style.display = 'block';
-                document.getElementById('checkbox-container').style.display = 'none';
-                currentDateSpan.textContent = formatDateRange(selectedDate);
-            })
-            .catch(err => {
-                console.error('Error fetching stats:', err);
-                showToast('獲取統計資料失敗', 'danger');
-            });
+    async function fetchStats(selectedDate, hall) {
+        try {
+            const data = await fetchAPI(`/getStats?selectedDate=${selectedDate}&hall=${hall}`);
+            renderStats(data);
+            document.getElementById('stats-container').style.display = 'block';
+            document.getElementById('checkbox-container').style.display = 'none';
+            currentDateSpan.textContent = formatDateRange(selectedDate);
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+            showToast('獲取統計資料失敗', 'danger');
+        }
     }
 
     function renderStats(stats) {
@@ -376,15 +398,13 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const category in stats) {
             const row = document.createElement('tr');
             row.innerHTML = `<td>${category}</td><td>${stats[category]}</td>`;
+            if (stats[category] > 10) {
+              row.classList.add('table-success');
+            }
             statsBody.appendChild(row);
         }
     }
     
-    function hideSubButtons() {
-        if(subButtons) subButtons.style.display = 'none';
-        isSubButtonsVisible = false;
-    }
-
     // --- 初始化與事件綁定 ---
     function initialize() {
         updatePageContent(getHallFromURL());
@@ -401,18 +421,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', debounce(function() {
             filterCaregiverData(this.value.trim().toLowerCase());
-        });
+        }, 300));
         
         mainButton.addEventListener('click', (e) => {
             e.stopPropagation();
             isSubButtonsVisible = !isSubButtonsVisible;
-            if (subButtons) subButtons.style.display = isSubButtonsVisible ? 'flex' : 'none';
+            if (subButtons) {
+              subButtons.style.display = 'flex';
+              subButtons.classList.toggle('active', isSubButtonsVisible);
+              mainButton.setAttribute('aria-expanded', isSubButtonsVisible);
+            }
         });
+
+        mainButton.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            mainButton.click();
+          }
+        });
+
         document.addEventListener('click', (e) => {
             if (isSubButtonsVisible && subButtons && !subButtons.contains(e.target)) {
-                hideSubButtons();
+                isSubButtonsVisible = false;
+                subButtons.classList.remove('active');
+                setTimeout(() => {
+                  subButtons.style.display = 'none';
+                }, 300);
             }
         });
         
@@ -426,7 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hallSelect.value = currentHallValue;
             updateRegionOptions(currentHallValue);
             modal.show();
-            hideSubButtons();
         });
 
         const statsBtn = document.getElementById('stats-button');
@@ -435,7 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedDate = dateRangeSelect.value;
             const hall = getHallFromURL();
             fetchStats(selectedDate, hall);
-            hideSubButtons();
         });
 
         const backToListBtn = document.getElementById('back-to-list');
@@ -447,6 +481,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const addEntryForm = document.getElementById('addEntryForm');
         if(addEntryForm) addEntryForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            const formError = document.getElementById('form-error');
+            formError.classList.add('d-none');
+
             const newEntryData = {
                 hall: document.getElementById('hall').value,
                 caregiver: document.getElementById('caregiver').value,
@@ -455,6 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 identity: document.getElementById('identity').value,
                 department: document.getElementById('department').value
             };
+
+            if (!newEntryData.hall || !newEntryData.region || !newEntryData.name || !newEntryData.caregiver || !newEntryData.identity) {
+              formError.textContent = '請填寫所有必填欄位';
+              formError.classList.remove('d-none');
+              formError.focus();
+              return;
+            }
+
             lastFormData = { ...newEntryData };
 
             fetch('/addNewData', {

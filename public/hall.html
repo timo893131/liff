@@ -14,7 +14,7 @@
 
   <div id="navbar-container"></div>
 
-  <div class="header-section">
+<div class="header-section">
     <div class="header-content-wrapper">
       <div class="header-title-wrapper">
         <h1><span id="hall-title">載入中...</span> - <span id="current-date">日期載入中...</span></h1>
@@ -26,7 +26,7 @@
     </div>
   </div>
 
-  <div class="container">
+  <div class="container container--full">
     <div id="checkbox-container">
         <div class="d-flex justify-content-center mt-5">
             <div class="spinner-border" role="status">
@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <div id="main-floating-button"><span>☰</span></div>
+  <div id="main-floating-button" role="button" aria-label="展開功能選單" aria-expanded="false" tabindex="0"><span>☰</span></div>
   <div id="sub-buttons">
     <button id="add-entry-button" class="btn btn-primary">新增名單</button>
     <button id="stats-button" class="btn btn-primary">統計</button>
@@ -75,8 +75,9 @@
         </div>
         <div class="modal-body">
           <form id="addEntryForm">
+            <div id="form-error" class="alert alert-danger d-none" role="alert"></div>
             <div class="mb-3">
-              <label for="hall" class="form-label">會所</label>
+              <label for="hall" class="form-label required">會所</label>
               <select class="form-select" id="hall" required>
                 <option value="" disabled>請選擇會所</option>
                 <option value="hall3">3會所</option>
@@ -88,21 +89,21 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="region" class="form-label">小區</label>
+              <label for="region" class="form-label required">小區</label>
               <select class="form-select" id="region" required>
                 <option value="">請先選擇會所...</option>
               </select>
             </div>
              <div class="mb-3">
-              <label for="name" class="form-label">姓名</label>
+              <label for="name" class="form-label required">姓名</label>
               <input type="text" class="form-control" id="name" required>
             </div>
             <div class="mb-3">
-              <label for="caregiver" class="form-label">牧人</label>
+              <label for="caregiver" class="form-label required">牧人</label>
               <input type="text" class="form-control" id="caregiver" required>
             </div>
             <div class="mb-3">
-              <label for="identity" class="form-label">身份</label>
+              <label for="identity" class="form-label required">身份</label>
               <select class="form-select" id="identity" required>
                 <option value="B">B</option>
                 <option value="S">S</option>
