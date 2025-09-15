@@ -9,7 +9,7 @@
   --c-primary-light: #eaf5fb;    /* 主題藍 (淺色背景) */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
   --c-text-secondary: #6b7280;   /* 次要文字 (更深的灰色，提高對比度) */
-  --c-background: #f8f9fa;       /* 頁面背景 (極淺灰) */
+  --c-background: #c4ddf6;       /* 頁面背景 (極淺灰) */
   --c-surface: #ffffff;          /* 內容區塊背景 (白) */
   --c-border: #e9ecef;           /* 邊線顏色 */
   --c-danger: #e74c3c;           /* 危險/刪除 */
