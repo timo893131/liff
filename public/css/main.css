@@ -34,7 +34,7 @@
   --radius-lg: 16px;
   
   /* 其他佈局變數 */
-  --navbar-height: 30px; /* 導覽列高度 */
+  --navbar-height: 50px; /* 導覽列高度 */
   --content-max-width: 1000px; /* 內容最大寬度 */
 }
 
@@ -60,7 +60,7 @@ body {
   background-color: var(--c-surface) !important;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-4);
 }
 .navbar-brand h3 {
   color: var(--c-primary);
@@ -87,14 +87,14 @@ body {
 
 /* 固定的頁首區塊 (Sticky Header) */
 .header-section, .sticky-header {
-  position: sticky;
+  position: fixed;
   top: var(--navbar-height);
   z-index: 1020;
   background-color: var(--c-background);
-  padding: var(--space-4);
+  padding: var(--space-2);
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 /* 限制 header 內容寬度，使其與下方 container 對齊 */
 .header-content-wrapper {
@@ -371,7 +371,7 @@ body {
   }
   .header-section {
     top: var(--navbar-height);
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-4);
   }
   .header-content-wrapper {
     flex-direction: column;
