@@ -1,11 +1,11 @@
-/* public/css/main.css (更新版，解決 navbar 與 header 間距及遮擋問題) */
+/* public/css/main.css (更新版，優化手機版 navbar 和 header 佈局) */
 
 /* --- 1. 設計系統 (CSS Variables) --- */
 :root {
   /* 色彩系統 (Color System) */
   --c-primary: #3498db;          /* 主題藍 */
   --c-primary-dark: #2980b9;     /* 主題藍 (懸浮) */
-  --c-primary-light: #b2ddf5;    /* 主題藍 (淺色背景) */
+  --c-primary-light: #b2ddf5;    /* 主題藍 */
   --c-text-primary: #2c3e50;     /* 主要文字 (深藍灰) */
   --c-text-secondary: #2980b9;   /* 次要文字 (淺灰) */
   --c-background: #f8f9fa;      /* 頁面背景 (極淺灰) */
@@ -44,7 +44,7 @@ body {
   background-color: var(--c-background);
   color: var(--c-text-primary);
   margin: 0;
-  padding-top: 60px; /* 縮減間距，桌面版導覽列高度 */
+  padding-top: 60px; /* 桌面版導覽列高度 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -68,16 +68,17 @@ body {
   background-color: var(--c-surface) !important;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-2) var(--space-4); /* 縮減導覽列內邊距 */
+  padding: var(--space-2) var(--space-4);
   position: fixed;
   top: 0;
   width: 100%;
   z-index: 1030;
+  height: 60px; /* 固定導覽列高度 */
 }
 .navbar-brand h3 {
   color: var(--c-primary);
   font-weight: 700;
-  font-size: 20px;
+  font-size: 18px; /* 縮減字體大小，適應手機版 */
 }
 .navbar-toggler {
   border: 1px solid var(--c-border);
@@ -85,6 +86,7 @@ body {
 .navbar-nav .nav-link {
   color: var(--c-text-secondary) !important;
   font-weight: 500;
+  font-size: 14px; /* 縮減字體大小，適應手機版 */
   transition: color 0.2s ease;
 }
 .navbar-nav .nav-link:hover,
@@ -92,7 +94,7 @@ body {
   color: var(--c-primary) !important;
 }
 #date-range-container {
-  margin-left: var(--space-5);
+  margin-left: var(--space-3); /* 縮減間距 */
 }
 
 /* 頁面標題區塊 */
@@ -118,7 +120,7 @@ body {
   flex-grow: 1;
 }
 .header-section h1 {
-  font-size: 20px; /* 縮減字體大小，減少垂直空間 */
+  font-size: 20px;
   font-weight: 700;
   margin: 0;
   color: var(--c-text-primary);
@@ -325,9 +327,9 @@ h4 {
 
 /* --- 5. 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
-  body { padding-top: 40px; } /* 手機版導覽列高度縮減 */
+  body { padding-top: 60px; } /* 與桌面版一致，使用 navbar 實際高度 */
   .header-section {
-    top: 40px; /* 與手機版導覽列高度一致 */
+    top: 60px; /* 與 navbar 高度一致 */
     flex-direction: column;
     align-items: stretch;
     padding: var(--space-2);
@@ -340,26 +342,42 @@ h4 {
     border: none;
     box-shadow: none;
     border-radius: 0;
-    margin-top: var(30px); /* 為 header-section 預留空間 */
+    margin-top: var(--space-4); /* 適當預留空間 */
   }
   #main-floating-button { width: 50px; height: 50px; }
   #sub-buttons { bottom: 80px; }
-  .navbar .container-fluid { flex-wrap: nowrap; }
+  .navbar .container-fluid {
+    flex-wrap: nowrap;
+    padding: var(--space-1); /* 減少內邊距 */
+  }
+  .navbar-brand {
+    margin-right: var(--space-2); /* 縮減品牌與其他元素的間距 */
+  }
+  .navbar-brand h3 {
+    font-size: 16px; /* 進一步縮減手機版字體大小 */
+  }
+  .navbar-nav .nav-link {
+    font-size: 12px; /* 縮減導航項目字體 */
+    padding: var(--space-1) var(--space-2); /* 縮減內邊距 */
+  }
   #date-range-container {
+    margin-left: var(--space-1); /* 進一步縮減間距 */
     display: flex;
-    gap: var(--space-2);
+    gap: var(--space-1); /* 縮減篩選器間距 */
     align-items: center;
   }
   #date-range-container .form-select {
-    width: 90px;
-    font-size: 9px;
+    width: 100px;
+    font-size: 10px;
+    padding: var(--space-1) var(--space-2); /* 縮減內邊距 */
   }
   #date-range-container .form-control {
-    width: 90px;
-    font-size: 9px;
+    width: 100px;
+    font-size: 10px;
+    padding: var(--space-1) var(--space-2); /* 縮減內邊距 */
   }
   .header-section h1 {
-    font-size: 18px; /* 手機版縮減字體大小 */
+    font-size: 16px; /* 進一步縮減手機版標題字體 */
   }
 }
 
