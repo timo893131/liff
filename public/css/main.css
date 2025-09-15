@@ -72,7 +72,7 @@ body {
 }
 .navbar-nav .nav-link {
   color: var(--c-text-secondary) !important;
-  font-weight: 500;
+  font-weight: 550;
   transition: color 0.2s ease;
 }
 .navbar-nav .nav-link:hover,
@@ -91,10 +91,12 @@ body {
   top: var(--navbar-height);
   z-index: 1020;
   background-color: var(--c-background);
-  padding: var(--space-2);
+  padding: var(--space-2); var(--space-4);
+  width: 100%;
+  max-width: 100%;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 /* 限制 header 內容寬度，使其與下方 container 對齊 */
 .header-content-wrapper {
