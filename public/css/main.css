@@ -34,7 +34,7 @@
   --radius-lg: 16px;
   
   /* 其他佈局變數 */
-  --navbar-height: 70px; /* 導覽列高度 */
+  --navbar-height: 30px; /* 導覽列高度 */
   --content-max-width: 1000px; /* 內容最大寬度 */
 }
 
@@ -90,7 +90,7 @@ body {
   position: sticky;
   top: var(--navbar-height);
   z-index: 1020;
-  background-color: var(--c-surface);
+  background-color: var(--c-background);
   padding: var(--space-4);
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
