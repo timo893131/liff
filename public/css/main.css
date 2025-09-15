@@ -96,7 +96,7 @@ body {
   max-width: 100%;
   border-bottom: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(40px);
 }
 /* 限制 header 內容寬度，使其與下方 container 對齊 */
 .header-content-wrapper {
@@ -142,6 +142,7 @@ body {
     border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
+    margin-top: var(--space-5); /* 20px */
     margin: var(--space-4) auto;
     max-width: var(--content-max-width);
 }
@@ -374,6 +375,7 @@ body {
   .header-section {
     top: var(--navbar-height);
     padding: var(--space-2) var(--space-4);
+    margin-bottom: var(40px);
   }
   .header-content-wrapper {
     flex-direction: column;
